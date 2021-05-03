@@ -106,9 +106,17 @@
 
 FROM jupyterhub/jupyterhub:latest
 
-RUN cd /srv/jupyterhub && python3 -m pip install jupyterhub-ltiauthenticator && python3 -m pip install install jupyterhub-simplespawner && python3 -m pip install install notebook && python3 -m pip install nbgrader 
-RUN cd /srv/jupyterhub && jupyter nbextension install --user --py nbgrader --overwrite && jupyter nbextension enable --user --py nbgrader && jupyter serverextension enable --user --py nbgrader
+RUN cd /srv/jupyterhub && python3 -m pip install jupyterhub-ltiauthenticator jupyterhub-simplespawner install notebook nbgrader
+
+# RUN cd /srv/jupyterhub && jupyter nbextension install --user --py nbgrader --overwrite && jupyter nbextension enable --user --py nbgrader && jupyter serverextension enable --user --py nbgrader
+
+RUN cd /srv/jupyterhub \
+  && jupyter nbextension install --system --py nbgrader --overwrite \
+  && jupyter nbextension enable --system --py nbgrader \
+  && jupyter serverextension enable --system --py nbgrader
+
 RUN cd /srv/jupyterhub && nbgrader quickstart 1
+
 COPY jupyterhub_config.py /srv/jupyterhub/jupyterhub_config.py
 
 EXPOSE 8000
