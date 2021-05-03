@@ -11,6 +11,7 @@
 # c.DockerSpawner.host_ip = "0.0.0.0"
 
 c.JupyterHub.hub_ip = '0.0.0.0'
+c.JupyterHub.bind_url = 'http://:8000'
 
 c.JupyterHub.spawner_class = 'simplespawner.SimpleLocalProcessSpawner'
 c.Spawner.args = ['--allow-root']
@@ -32,4 +33,3 @@ c.JupyterHub.admin_access = True
 # c.JupyterHub.spawner_class = 'dockerspawner.SystemUserSpawner'
 
 # c.DockerSpawner.host_ip = "0.0.0.0"
-
