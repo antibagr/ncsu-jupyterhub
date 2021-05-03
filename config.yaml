@@ -1,0 +1,6 @@
+ auth:
+      type: "lti"
+      lti:
+          consumers: { 
+              "846d620d84d83153495cd2d28e239405ff13887b1a1d9957a71160eceed9e1d6": "fabfd9ca0dbb69f1cd4d2d77c413a112fb83069b8ea2b211062ec79ee411579e"
+              }
