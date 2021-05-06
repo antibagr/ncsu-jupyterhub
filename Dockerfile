@@ -106,7 +106,11 @@
 
 FROM jupyterhub/jupyterhub:latest
 
-RUN cd /srv/jupyterhub && python3 -m pip install jupyterhub-ltiauthenticator jupyterhub-simplespawner install notebook nbgrader
+# WORKDIR /srv/jupyterhub
+
+RUN apt-get update && apt-get install git -y
+
+RUN cd /srv/jupyterhub && python3 -m pip install jupyterhub-ltiauthenticator jupyterhub-simplespawner install notebook nbgrader git+https://github.com/jupyterhub/sudospawner
 
 # RUN cd /srv/jupyterhub && jupyter nbextension install --user --py nbgrader --overwrite && jupyter nbextension enable --user --py nbgrader && jupyter serverextension enable --user --py nbgrader
 
@@ -115,8 +119,16 @@ RUN cd /srv/jupyterhub \
   && jupyter nbextension enable --system --py nbgrader \
   && jupyter serverextension enable --system --py nbgrader
 
-RUN cd /srv/jupyterhub && nbgrader quickstart 1
+RUN mkdir -p /srv/nbgrader/exchange && chmod 777 /srv/nbgrader/exchange
 
-COPY jupyterhub_config.py /srv/jupyterhub/jupyterhub_config.py
+RUN cd /srv/jupyterhub && nbgrader quickstart test_course
 
-EXPOSE 8000
+COPY jupyterhub_config.py certificate.crt key.key /srv/jupyterhub/
+
+# RUN cd /srv/nbgrader && chmod ugo+rw exchange 
+
+# && rm -f test_course/nbgrader_config.py
+
+# COPY nbgrader_config.py /srv/jupyterhub/nbgrader_config.py
+
+
