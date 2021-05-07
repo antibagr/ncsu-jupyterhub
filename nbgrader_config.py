@@ -6,9 +6,10 @@ c = get_config()
 
 # You only need this if you are running nbgrader on a shared
 # server set up.
-c.CourseDirectory.root = '/srv/jupyterhub/test_course'
-c.CourseDirectory.course_id = "test_course"
-c.Exchange.root = "/srv/nbgrader/exchange"
+c.CourseDirectory.root = '/srv/sourses/'
+c.Exchange.root = '/srv/exchange'
+NbGrader.logfileUnicode = '/srv/nbgrader_stdout.log'
+NbGrader.logfile = '/srv/nbgrader_stdout.log'
 
 # Update this list with other assignments you want
 c.CourseDirectory.db_assignments = [dict(name="ps1")]
