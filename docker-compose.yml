@@ -2,11 +2,15 @@ version: "3.1"
 
 services:
   jupyterhub:
-    container_name: hub
+    container_name: jhub
+    image: jupyterhub-nbgrader
     build: .
     ports:
       - 443:443
+    env_file:
+      - ./.env
     volumes:
-      - /etc/ssl/private/ssc_jhub.key:/etc/ssl/private/ssc_jhub.key
-      - /etc/ssl/certs/ssc_jhub.crt:/etc/ssl/certs/ssc_jhub.crt
-      - ./:/srv/JupyterHub
+      - ./cert/ssc_jhub.key:/etc/ssl/private/ssc_jhub.key:ro
+      - ./cert/ssc_jhub.crt:/etc/ssl/certs/ssc_jhub.crt:ro
+      - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
+    command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log
