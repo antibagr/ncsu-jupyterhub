@@ -1,0 +1,4 @@
+jupyterhub-ltiauthenticator
+jupyterhub-simplespawner
+notebook
+nbgrader

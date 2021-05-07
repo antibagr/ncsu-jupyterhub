@@ -1,42 +1,48 @@
-# c.LocalAuthenticator.create_system_users=True
+import os
+import platform
 
-# c.JupyterHub.admin_access = True
-# import os
+from unittest.mock import Mock
 
-# c.JupyterHub.spawner_class = 'dockerspawner.SwarmSpawner'
-# network_name = os.environ['DOCKER_NETWORK_NAME']
-# c.SwarmSpawner.network_name = network_name
-# c.SwarmSpawner.extra_host_config = {'network_mode': network_name}
 
-# c.DockerSpawner.host_ip = "0.0.0.0"
+# mocking c variable while editing the file to turn off linter.
+if platform.system() == 'Windows': c = Mock()
 
-# c.JupyterHub.ssl_key = 'key.pem'
-c.JupyterHub.ssl_cert = 'certificate.crt'
-c.JupyterHub.ssl_key = 'key.key'
+# ---------------
+# IP
+# ---------------
 
-c.CourseDirectory.root = '/srv/jupyterhub/test_course/source'
-
+c.JupyterHub.bind_url = 'https://jhub-dev.cos.ncsu.edu:443'
+c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.port = 443
 
-c.JupyterHub.bind_url = 'https://jhub-dev.cos.ncsu.edu:443'
+# ---------------
+# SSL
+# ---------------
 
-c.JupyterHub.spawner_class = 'simplespawner.SimpleLocalProcessSpawner' # 'sudospawner.SudoSpawner' # 'simplespawner.SimpleLocalProcessSpawner'
+c.JupyterHub.ssl_cert = '/etc/ssl/certs/ssc_jhub.crt'
+c.JupyterHub.ssl_key = '/etc/ssl/private/ssc_jhub.key'
 
-c.Spawner.args = ['--allow-root']
+# ---------------
+# DIRECTORY
+# ---------------
 
-c.JupyterHub.ip = '0.0.0.0'
+c.CourseDirectory.root = '/srv/jupyterhub'
+
+# ---------------
+# AUTHENTICAION
+# ---------------
 
 c.JupyterHub.authenticator_class = 'ltiauthenticator.LTIAuthenticator'
 
-c.LTIAuthenticator.consumers = {'9376ace600c133f074c4482eb8035ea1b32280e969576cf2df9b75ca05033eb4': '03f1f6119177781dcf7540289708fe426be57a26b44628b0f867dee8ba2373e1'}
+c.LTIAuthenticator.consumers = {
+    os.getenv('consume_key'): os.getenv('consume_secret'),
+}
 
-c.JupyterHub.admin_users = { '1', '2', '3', '4' }
+# ---------------
+# USERS
+# ---------------
+
+c.JupyterHub.admin_users = {}
 
 c.JupyterHub.admin_access = True
-
-c.LocalAuthenticator.create_system_users=True
-
-# c.JupyterHub.spawner_class = 'dockerspawner.SystemUserSpawner'
-
-# c.DockerSpawner.host_ip = "0.0.0.0"
