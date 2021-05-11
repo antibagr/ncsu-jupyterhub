@@ -21,8 +21,9 @@ c.JupyterHub.port = 443
 # SSL
 # ---------------
 
-c.JupyterHub.ssl_cert = '/etc/ssl/certs/ssc_jhub.crt'
-c.JupyterHub.ssl_key = '/etc/ssl/private/ssc_jhub.key'
+c.JupyterHub.ssl_cert = '/srv/jupyterhub/ssc_jhub.crt'
+c.JupyterHub.ssl_key = '/srv/jupyterhub/ssc_jhub.key'
+# c.JupyterHub.password = 'pass'
 
 # ---------------
 # DIRECTORY
@@ -51,4 +52,4 @@ c.LTIAuthenticator.consumers = {
 
 c.JupyterHub.admin_users = set()
 
-c.JupyterHub.admin_access = False
+c.JupyterHub.admin_access = True

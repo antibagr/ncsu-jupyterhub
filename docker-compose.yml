@@ -7,10 +7,11 @@ services:
     build: .
     ports:
       - 443:443
+      - 8000:8000
     env_file:
       - ./.env
     volumes:
-      - ./cert/ssc_jhub.key:/etc/ssl/private/ssc_jhub.key:ro
-      - ./cert/ssc_jhub.crt:/etc/ssl/certs/ssc_jhub.crt:ro
+      - ./cert/ssc_jhub.key:/srv/jupyterhub/ssc_jhub.key:ro
+      - ./cert/ssc_jhub.crt:/srv/jupyterhub/ssc_jhub.crt:ro
       - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
     command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log
