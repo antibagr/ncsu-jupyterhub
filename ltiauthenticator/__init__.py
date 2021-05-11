@@ -45,10 +45,8 @@ class LTILaunchValidator:
                 oauth_signature
         """
 
-        # raise web.HTTPError(500, str(args) + '\n' + str(self.consumers) )
-        
         # Validate args!
-        
+
         if 'oauth_consumer_key' not in args:
             raise web.HTTPError(401, "oauth_consumer_key missing")
         if args['oauth_consumer_key'] not in self.consumers:
@@ -102,8 +100,6 @@ class LTILaunchValidator:
 
         if not is_valid:
             raise web.HTTPError(401, "Invalid oauth_signature")
-        with open(f'/srv/jupyterhub/{datetime.now()}.txt', 'w') as f:
-            f.write(str(args_list) + '\n' + str(base_string) )
         return True
 
 
@@ -152,30 +148,25 @@ class LTIAuthenticator(Authenticator):
 
         launch_url = protocol + "://" + handler.request.host + handler.request.uri
 
+        self.log.warning(f"{args}\n{handler.request.headers}")
+
         if validator.validate_launch_request(
                 launch_url,
                 handler.request.headers,
                 args
         ):
-            # Before we return lti_user_id, check to see if a canvas_custom_user_id was sent. 
-            # If so, this indicates two things:
-            # 1. The request was sent from Canvas, not edX
-            # 2. The request was sent from a Canvas course not running in anonymous mode
-            # If this is the case we want to use the canvas ID to allow grade returns through the Canvas API
-            # If Canvas is running in anonymous mode, we'll still want the 'user_id' (which is the `lti_user_id``)
-
-            # canvas_id = handler.get_body_argument('custom_canvas_user_id', default=None)
-
-            # if canvas_id is not None:
-            #     user_id = handler.get_body_argument('custom_canvas_user_id')
-            # else:
-            #     user_id = handler.get_body_argument('user_id')
+            user_role = "Learner"
+            if "roles" in args and args["roles"]:
+                args["role"] = args["roles"].split(",")[0]
+                self.log.debug("User LTI role is: %s" % user_role)
+            else:
+                raise HTTPError(400, "User role not included in the LTI request")
 
             user_name = handler.get_body_argument('ext_user_username')
 
             return {
                 'name': user_name,
-                'auth_state': {k: v for k, v in args.items() if not k.startswith('oauth_')}
+                'auth_state': args # {k: v for k, v in args.items() if not k.startswith('oauth_')}
             }
 
 

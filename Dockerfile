@@ -16,8 +16,14 @@ RUN jupyter nbextension install --system --py nbgrader --overwrite \
 
 # Create exchange directory
 
-RUN mkdir -p /srv/exchange && chmod ugo+rw /srv/exchange
+RUN mkdir -p /srv/nbgrader/exchange && chmod ugo+rw /srv/nbgrader/exchange
 
 # Update LTI authenticator with patched verion
 
 COPY ltiauthenticator/__init__.py /usr/local/lib/python3.8/dist-packages/ltiauthenticator/__init__.py
+
+# Update nbgrader to ignore SSL certificate.
+
+COPY nbgrader/server_extensions/course_list/handlers.py /usr/local/lib/python3.8/dist-packages/nbgrader/server_extensions/course_list/handlers.py
+
+RUN apt-get update && apt-get install -y systemctl && apt-get install -y systemd
