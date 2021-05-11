@@ -9,7 +9,7 @@
 backup_files="/home"
 
 # Where to backup to.
-dest="/mnt/backup"
+dest="/backup"
 
 # Create archive filename.
 day=$(date +%A)
@@ -22,8 +22,8 @@ date
 echo
 
 # Backup the files using tar.
-# tar czf $dest/$archive_file $backup_files
-tar -c --use-compress-program=pigz czf $dest/$archive_file $backup_files
+tar czf $dest/$archive_file $backup_files
+# tar -c --use-compress-program=pigz czf $dest/$archive_file $backup_files
 
 
 # Print end status message.
