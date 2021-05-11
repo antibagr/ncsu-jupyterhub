@@ -1,5 +1,5 @@
 jupyterhub-ltiauthenticator
-dockerspawner
-# jupyterhub-simplespawner
+# dockerspawner
+jupyterhub-simplespawner
 notebook
 nbgrader
