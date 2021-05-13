@@ -1,7 +1,7 @@
 #!/bin/bash
 ####################################
 #
-# Backup to NFS mount script.
+# Script to tar whole /home folder to /backup
 #
 ####################################
 

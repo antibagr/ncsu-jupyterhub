@@ -13,8 +13,9 @@ services:
     volumes:
       - ./backup:/backup
       - ./backup.sh:/srv/jupyterhub/backup.sh
-      - ./cert/ssc_jhub.key:/srv/jupyterhub/ssc_jhub.key:ro
-      - ./cert/ssc_jhub.crt:/srv/jupyterhub/ssc_jhub.crt:ro
+      #  jhub-dev_cos_ncsu_edu_cert.cer  jhub-dev.cos.ncsu.edu.csr  jhub-dev.cos.ncsu.edu.key
+      - /root/certificates/jhub-dev_cos_ncsu_edu_cert.cer:/srv/jupyterhub/ssc_jhub.crt:ro
+      - /root/certificates/jhub-dev.cos.ncsu.edu.key:/srv/jupyterhub/ssc_jhub.key:ro
       - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
     command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log
 

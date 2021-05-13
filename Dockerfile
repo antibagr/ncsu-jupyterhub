@@ -25,7 +25,7 @@ COPY ltiauthenticator/__init__.py /usr/local/lib/python3.8/dist-packages/ltiauth
 
 # Update nbgrader to ignore SSL certificate.
 
-COPY nbgrader/server_extensions/course_list/handlers.py /usr/local/lib/python3.8/dist-packages/nbgrader/server_extensions/course_list/handlers.py
+# COPY nbgrader/server_extensions/course_list/handlers.py /usr/local/lib/python3.8/dist-packages/nbgrader/server_extensions/course_list/handlers.py
 
 # RUN apt-get update && apt-get install -y systemctl && apt-get install -y systemd
 
