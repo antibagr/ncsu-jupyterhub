@@ -1,12 +1,14 @@
 import os
-from os import path
 import platform
-
+import pwd
+import subprocess
+from os import path
 from unittest.mock import Mock
 
-
-# mocking c variable while editing the file to turn off linter.
-if platform.system() == 'Windows': c = Mock()
+# mocking c variable while
+# editing the file to turn off linter.
+if platform.system() == 'Windows':
+    c = Mock()
 
 # ---------------
 # IP
@@ -70,13 +72,10 @@ c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
 
 # c.Spawner.notebook_dir = '~/notebooks'
 
-c.Spawner.args = ['--debug',]
+c.Spawner.args = ['--debug', ]
+
 
 def pre_spawn_hook(spawner):
-
-    import pwd
-    import subprocess
-    import os
 
     username = spawner.user.name
 
@@ -90,7 +89,8 @@ def pre_spawn_hook(spawner):
 
     if spawner.userdata['role'] == 'Instructor':
        if not os.path.exists(f'/home/{username}/nbgrader_config.py'):
-           spawner.log.info('Initialize instructor\'s directory. Create nbgrader_config and test course')
+           spawner.log.info(
+               'Initialize instructor\'s directory. Create nbgrader_config and test course')
            with open(f'/home/{username}/nbgrader_config.py', 'w') as f:
                f.write(f'''
 c = get_config()
@@ -102,14 +102,12 @@ c.Exchange.path_includes_course = True
            os.system(f'cd /home/{username} && nbgrader quickstart test_course')
        # subprocess.check_call(f'su - {username} && jupyter serverextension disable --user nbgrader.server_extensions.formgrader'.split())
 
-
     spawner.log.warning(spawner.userdata or 'NO AUTH STATE FOUND')
 
 
 def bind_auth_state(spawner, auth_state: dict) -> None:
     spawner.log.info('bind auth state to a spawner')
     spawner.userdata = auth_state
-
 
 
 c.Spawner.auth_state_hook = bind_auth_state
