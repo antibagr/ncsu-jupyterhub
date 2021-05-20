@@ -5,7 +5,7 @@ from requests.models import Response
 from .utils import dump_json
 
 
-class FluidResponse(dict):
+class FluidResponse():
     '''Documentation required
 
     Args:
@@ -21,7 +21,7 @@ class FluidResponse(dict):
         self.http_resp = resp
         self.resp = self.http_resp.json()
 
-    def __iter__(self) -> t.Generator[t.Any]:
+    def __iter__(self) -> t.Generator[t.Any, None, None]:
         for el in self.resp:
             yield el
 
@@ -40,3 +40,13 @@ class FluidResponse(dict):
 
     def __len__(self) -> int:
         return len(self.resp)
+
+    def __getitem__(self, key: t.Union[str, int]) -> t.Any:
+        return self.resp[key]
+
+    def __setitem__(self, key: t.Union[str, int], value: t.Any) -> None:
+
+        if not isinstance(self, dict):
+            assert isinstance(key, int), f'index of a list must be integer. {type(key)} given.'
+
+        self.resp[key] = value
