@@ -1,26 +1,26 @@
 """Tornado handlers for nbgrader course list web service."""
 
-import os
 import contextlib
 import json
+import os
 import traceback
-
-from tornado import web
-from tornado.httpclient import AsyncHTTPClient, HTTPError
-from tornado import gen
 from textwrap import dedent
 from urllib.parse import urlparse
 
-from notebook.utils import url_path_join as ujoin
-from notebook.base.handlers import IPythonHandler
 from jupyter_core.paths import jupyter_config_path
+from notebook.base.handlers import IPythonHandler
+from notebook.utils import url_path_join as ujoin
+from tornado import gen, web
+from tornado.httpclient import AsyncHTTPClient, HTTPError
 
+from ... import __version__ as nbgrader_version
 from ...apps import NbGrader
 from ...auth import Authenticator
-from ...auth.jupyterhub import (JupyterhubEnvironmentError, get_jupyterhub_api_url,
-                                get_jupyterhub_authorization, get_jupyterhub_user)
+from ...auth.jupyterhub import (JupyterhubEnvironmentError,
+                                get_jupyterhub_api_url,
+                                get_jupyterhub_authorization,
+                                get_jupyterhub_user)
 from ...coursedir import CourseDirectory
-from ... import __version__ as nbgrader_version
 
 
 @contextlib.contextmanager
@@ -105,6 +105,7 @@ class CourseListHandler(IPythonHandler):
         url = self.get_base_url() + "/services/" + coursedir.course_id + "/formgrader"
         auth = get_jupyterhub_authorization()
         http_client = AsyncHTTPClient()
+
         try:
             yield http_client.fetch(url, headers=auth)
         except:
@@ -120,11 +121,15 @@ class CourseListHandler(IPythonHandler):
 
     @gen.coroutine
     def check_for_jupyterhub_formgraders(self, config):
+
         # first get the list of courses from the authenticator
+
         auth = Authenticator(config=config)
+
         try:
             course_names = auth.get_student_courses("*")
         except JupyterhubEnvironmentError:
+
             # not running on JupyterHub, or otherwise don't have access
             raise gen.Return([])
 
@@ -149,6 +154,7 @@ class CourseListHandler(IPythonHandler):
             raise gen.Return([])
 
         courses = []
+
         for course in course_names:
             if course not in services:
                 self.log.warning("Couldn't find formgrader for course '%s'", course)
