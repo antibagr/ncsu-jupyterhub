@@ -1,0 +1,77 @@
+import os
+import platform
+import pwd
+import subprocess
+from os import path
+from unittest.mock import Mock
+
+# mocking c variable while
+# editing the file to turn off linter.
+if platform.system() == 'Windows':
+    c = Mock()
+
+# ---------------
+# IP
+# ---------------
+
+c.JupyterHub.ip = '0.0.0.0'
+c.JupyterHub.hub_ip = '0.0.0.0'
+c.JupyterHub.port = 443
+
+# ---------------
+# SSL
+# ---------------
+
+c.JupyterHub.ssl_cert = '/srv/jupyterhub/ssc_jhub.crt'
+c.JupyterHub.ssl_key = '/srv/jupyterhub/ssc_jhub.key'
+
+# ---------------
+# DIRECTORY
+# ---------------
+
+BASE_DIR: str = '/srv/jupyterhub'
+
+c.CourseDirectory.root = BASE_DIR
+
+# c.JupyterHub.extra_log_file = path.join(BASE_DIR, 'jupyterhub.log')
+
+
+# ---------------
+# AUTHENTICAION
+# ---------------
+
+c.JupyterHub.authenticator_class = 'ltiauthenticator.LTIAuthenticator'
+
+c.Authenticator.enable_auth_state = True
+
+# ---------------
+# USERS
+# ---------------
+
+c.JupyterHub.admin_users = set()
+
+c.JupyterHub.admin_access = True
+
+
+# ---------------
+# SPAWNER
+# ---------------
+
+c.JupyterHub.spawner_class = 'simplespawner.SimpleLocalProcessSpawner'
+
+# c.SystemdSpawner.dynamic_users = True
+
+# c.SystemdSpawner.readwrite_paths = ['/srv/nbgrader/exchange']
+
+
+# c.Spawner.notebook_dir = '~/notebooks'
+
+c.Spawner.args = ['--debug', ]
+
+c.Authenticator.whitelist = {whitelist}
+
+c.Authenticator.admin_users = {admin_users}
+
+c.JupyterHub.load_groups = {groups}
+
+c.JupyterHub.services = {services}

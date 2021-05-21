@@ -7,6 +7,8 @@ from .exceptions import MoodleAPIException
 from .response import FluidResponse
 from .utils import dump_json
 
+from .typehints import JsonType
+
 
 class BaseAPIClient:
     '''
@@ -26,7 +28,7 @@ class BaseAPIClient:
                 in_args: t.Union[t.Sequence, t.Dict],
                 prefix: t.Optional[str] = '',
                 out_dict: t.Optional[t.Dict] = None,
-            ) -> t.Dict[str, str]:
+            ) -> JsonType:
         '''
 
         Transform dictionary/array structure to a flat dictionary, with key names
@@ -49,7 +51,7 @@ class BaseAPIClient:
             out_dict[prefix] = in_args
             return out_dict
 
-        prefix += '{0}' if prefix == '' else '[{0}]'
+        prefix += '{0}' if not prefix else '[{0}]'
 
         sequence = enumerate(in_args) if isinstance(
             in_args, list) else in_args.items()
@@ -70,11 +72,18 @@ class BaseAPIClient:
 
         parameters = self.rest_api_parameters(kwargs)
 
-        parameters |= {'wstoken': self.key,
-                       'moodlewsrestformat': 'json', 'wsfunction': fname}
+        print(f'''
+        Calling "{fname}"
 
-        print(f'\nCalling "{fname}"\n\n')
-        print(dump_json(parameters))
+        {dump_json(parameters)[1:-1] or 'Without parameters'}
+        '''
+              )
+
+        parameters |= {
+                        'wstoken': self.key,
+                        'moodlewsrestformat': 'json',
+                        'wsfunction': fname,
+                       }
 
         resp: Response = requests.post(self.url + self.endpoint, parameters)
 

@@ -9,11 +9,11 @@ class FluidResponse():
     '''Documentation required
 
     Args:
-        resp (Response): .
+        resp (Response): HTTP Response from API
 
     Attributes:
-        http_resp (type): .
-        resp
+        http_resp (type): Stored HTTP Response
+        resp (JsonType): Json Data
 
     '''
 
@@ -32,6 +32,10 @@ class FluidResponse():
         return dump_json(self.resp)
 
     def print(self) -> None:
+        '''
+        Print shortcut for chaining style.
+        '''
+
         print(self)
 
     @property
