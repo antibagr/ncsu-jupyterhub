@@ -88,14 +88,13 @@ class FileGenerator(Processor):
 
             users = course['instructors'] + course['graders'] + course['students']
 
+            groups[group_name] = []
+
             for user in users:
 
                 if user['role'] != 'student':
 
-                    if group_name in groups:
-                        groups[group_name].append(user['username'])
-                    else:
-                        groups[group_name] = [user['username']]
+                    groups[group_name].append(user['username'])
 
                 user_home: Path = Path(f'/home{user["username"]}')
 
@@ -110,10 +109,8 @@ class FileGenerator(Processor):
                 nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
                 whitelist.add(user['username'])
 
-            if group_name not in groups:
-                continue
-
             groups[group_name].append(f'grader-{course_id}')
+            whitelist.add(f'grader-{course_id}')
 
             self._create_grader_directories(course_id)
 
