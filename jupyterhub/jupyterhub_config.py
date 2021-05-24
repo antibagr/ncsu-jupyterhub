@@ -42,10 +42,6 @@ c.CourseDirectory.root = BASE_DIR
 
 c.JupyterHub.authenticator_class = 'ltiauthenticator.LTIAuthenticator'
 
-c.LTIAuthenticator.consumers = {
-    os.getenv('LTI_CONSUMER_KEY'): os.getenv('LTI_CONSUMER_SECRET'),
-}
-
 c.Authenticator.enable_auth_state = True
 
 # ---------------
@@ -63,8 +59,6 @@ c.JupyterHub.admin_access = True
 
 c.JupyterHub.spawner_class = 'simplespawner.SimpleLocalProcessSpawner'
 
-c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
-
 # c.SystemdSpawner.dynamic_users = True
 
 # c.SystemdSpawner.readwrite_paths = ['/srv/nbgrader/exchange']
@@ -74,44 +68,10 @@ c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
 
 c.Spawner.args = ['--debug', ]
 
+c.Authenticator.whitelist = {'student', 'test_student3', 'api_admin', 'test_teacher', 'test_ta', 'admin', 'test_student2', 'test_student'}
 
-def pre_spawn_hook(spawner):
+c.Authenticator.admin_users = {'admin', 'api_admin'}
 
-    username = spawner.user.name
+c.JupyterHub.load_groups = {'formgrade-second_course': ['admin', 'api_admin', 'test_ta', 'grader-second_course'], 'formgrade-first_course': ['test_student3', 'test_teacher', 'grader-first_course']}
 
-#    try:
-#        pwd.getpwnam(username)
-#    except KeyError:
-#        subprocess.check_call(['useradd', '-ms', '/bin/bash', username])
-
-    if not os.path.exists(f'/home/{username}'):
-        os.makedirs(f'/home/{username}')
-
-    if spawner.userdata['role'] == 'Instructor':
-       if not os.path.exists(f'/home/{username}/nbgrader_config.py'):
-           spawner.log.info(
-               'Initialize instructor\'s directory. Create nbgrader_config and test course')
-           with open(f'/home/{username}/nbgrader_config.py', 'w') as f:
-               f.write(f'''
-c = get_config()
-
-c.CourseDirectory.root = "/home/{username}/test_course"
-
-c.Exchange.path_includes_course = True
-''')
-           os.system(f'cd /home/{username} && nbgrader quickstart test_course')
-       # subprocess.check_call(f'su - {username} && jupyter serverextension disable --user nbgrader.server_extensions.formgrader'.split())
-
-    spawner.log.warning(spawner.userdata or 'NO AUTH STATE FOUND')
-
-
-def bind_auth_state(spawner, auth_state: dict) -> None:
-    spawner.log.info('bind auth state to a spawner')
-    spawner.userdata = auth_state
-
-
-c.Spawner.auth_state_hook = bind_auth_state
-
-c.Spawner.pre_spawn_hook = pre_spawn_hook
-
-c.Spawner.args = ['--allow-root']
+c.JupyterHub.services = [{'name': 'your_school', 'url': 'http://127.0.0.1:9999', 'command': ['jupyterhub-singleuser', '--group=formgrade-your_school', '--debug'], 'user': 'grader-your_school', 'cwd': '/home/grader-your_school', 'api_token': 'cb50e05c10775855e8a48319d68014777f4d9573281ec1958ceed6a32c0f369b'}, {'name': 'second_course', 'url': 'http://127.0.0.1:9999', 'command': ['jupyterhub-singleuser', '--group=formgrade-second_course', '--debug'], 'user': 'grader-second_course', 'cwd': '/home/grader-second_course', 'api_token': '80461909f950b6cb8ab98483ad6e44cbad18cc0d48c0bd072920c39824dce43a'}, {'name': 'first_course', 'url': 'http://127.0.0.1:9999', 'command': ['jupyterhub-singleuser', '--group=formgrade-first_course', '--debug'], 'user': 'grader-first_course', 'cwd': '/home/grader-first_course', 'api_token': '3d988e7b4ede883d6d41dcfd8fe0edd28bb55f783600455a56883fe5dc204ed9'}]

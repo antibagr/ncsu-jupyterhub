@@ -8,7 +8,7 @@ KEY = "0461b4a7e65e63921172fa3727f0863c"
 
 client = Moodle(KEY, URL)
 
-# client.sync()
+client.sync()
 
 gen = FileGenerator()
 

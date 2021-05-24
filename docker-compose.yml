@@ -10,6 +10,7 @@ services:
     env_file:
       - ./.env
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
       - ./moodle_importer:/srv/jupyterhub/moodle_importer
 

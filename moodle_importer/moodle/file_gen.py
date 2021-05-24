@@ -29,7 +29,7 @@ class FileGenerator(Processor):
     def __init__(self) -> None:
 
         self._temp_fn = self.BASE_DIR / 'data' / 'template.py'
-        self._out_fn = self.BASE_DIR / 'data' / 'jupyterhub_config.py'
+        self._out_fn = '/srv/jupyterhub/jupyterhub_config.py'
 
         super().__init__()
 
@@ -93,9 +93,9 @@ class FileGenerator(Processor):
                 if user['role'] != 'student':
 
                     if group_name in groups:
-                        groups[group_name].append(grader['username'])
+                        groups[group_name].append(user['username'])
                     else:
-                        groups[group_name] = [grader['username']]
+                        groups[group_name] = [user['username']]
 
                 user_home: Path = Path(f'/home{user["username"]}')
 
@@ -109,6 +109,9 @@ class FileGenerator(Processor):
 
                 nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
                 whitelist.add(user['username'])
+
+            if group_name not in groups:
+                continue
 
             groups[group_name].append(f'grader-{course_id}')
 
