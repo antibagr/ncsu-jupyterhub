@@ -1,6 +1,7 @@
 import os
 import platform
 import pwd
+import json
 import subprocess
 from os import path
 from unittest.mock import Mock
@@ -70,8 +71,24 @@ c.Spawner.args = ['--debug', ]
 
 c.Authenticator.whitelist = {'student', 'test_student3', 'api_admin', 'test_teacher', 'test_ta', 'admin', 'test_student2', 'test_student'}
 
+
 c.Authenticator.admin_users = {'admin', 'api_admin'}
 
-c.JupyterHub.load_groups = {'formgrade-second_course': ['admin', 'api_admin', 'test_ta', 'grader-second_course'], 'formgrade-first_course': ['test_student3', 'test_teacher', 'grader-first_course']}
+def pre_spawn_hook(spawner):
 
-c.JupyterHub.services = [{'name': 'your_school', 'url': 'http://127.0.0.1:9999', 'command': ['jupyterhub-singleuser', '--group=formgrade-your_school', '--debug'], 'user': 'grader-your_school', 'cwd': '/home/grader-your_school', 'api_token': 'cb50e05c10775855e8a48319d68014777f4d9573281ec1958ceed6a32c0f369b'}, {'name': 'second_course', 'url': 'http://127.0.0.1:9999', 'command': ['jupyterhub-singleuser', '--group=formgrade-second_course', '--debug'], 'user': 'grader-second_course', 'cwd': '/home/grader-second_course', 'api_token': '80461909f950b6cb8ab98483ad6e44cbad18cc0d48c0bd072920c39824dce43a'}, {'name': 'first_course', 'url': 'http://127.0.0.1:9999', 'command': ['jupyterhub-singleuser', '--group=formgrade-first_course', '--debug'], 'user': 'grader-first_course', 'cwd': '/home/grader-first_course', 'api_token': '3d988e7b4ede883d6d41dcfd8fe0edd28bb55f783600455a56883fe5dc204ed9'}]
+    username = spawner.user.name
+
+    if not os.path.exists(f'/home/{username}'):
+        os.makedirs(f'/home/{username}')
+
+    spawner.log.warning(
+        json.dumps(spawner.userdata or {'Data': 'Not Found'}, indent=4, sort_keys=True, ensure_ascii=False)
+    )
+
+
+def bind_auth_state(spawner, auth_state: dict) -> None:
+    spawner.log.info('Bind auth state to a spawner.')
+    spawner.userdata = auth_state
+
+
+c.Spawner.auth_state_hook = bind_auth_state

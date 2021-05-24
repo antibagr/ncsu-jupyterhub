@@ -20,3 +20,5 @@ RUN mkdir -p /srv/nbgrader/exchange && \
     chmod ugo+rw /srv/nbgrader/exchange && \
     mkdir -p /etc/jupyter && \
     chmod ugo+rw /etc/jupyter
+
+COPY jupyterhub/jupyterhub_config.py .
