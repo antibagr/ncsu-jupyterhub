@@ -79,11 +79,11 @@ class BaseAPIClient:
         '''
               )
 
-        parameters |= {
+        parameters.update({
                         'wstoken': self.key,
                         'moodlewsrestformat': 'json',
                         'wsfunction': fname,
-                       }
+                       })
 
         resp: Response = requests.post(self.url + self.endpoint, parameters)
 

@@ -20,7 +20,7 @@ services:
       - /root/certificates/jhub-dev.cos.ncsu.edu.key:/srv/jupyterhub/ssc_jhub.key:ro
 
       - ./jupyterhub/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
-      - ./jupyterhub/nbgrader_configuration/global_nbgrader_config.py:/etc/jupyter/nbgrader_config.py
+      - ./jupyterhub/nbgrader_configuration/nbgrader_global_config.py:/etc/jupyter/nbgrader_config.py
 
       # Update nbgrader to ignore SSL certificate.
       - ./jupyterhub/nbgrader/handlers.py:/usr/local/lib/python3.8/dist-packages/nbgrader/server_extensions/course_list/handlers.py

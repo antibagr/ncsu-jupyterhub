@@ -86,22 +86,31 @@ class FileGenerator(Processor):
 
             group_name = f'formgrade-{course_id}'
 
-            for grader in course['instructors'] + course['graders'] + [{'username': f'grader-{course_id}'}]:
-
-                print(groups)
-
-                if group_name in groups:
-                    groups[group_name].append(grader['username'])
-                else:
-                    groups[group_name] = [grader['username']]
-
-            groups[f'nbgrader-{course_id}'] = []
-
             users = course['instructors'] + course['graders'] + course['students']
 
             for user in users:
+
+                if user['role'] != 'student':
+
+                    if group_name in groups:
+                        groups[group_name].append(grader['username'])
+                    else:
+                        groups[group_name] = [grader['username']]
+
+                user_home: Path = Path(f'/home{user["username"]}')
+
+                user_home.mkdir(parents=True, exist_ok=True)
+
+                # user_home.joinpath('nbgrader_config.py').write_text(
+                # NBGRADER_COURSE_CONFIG_TEMPLATE.format(
+                #     course_id=course_id
+                # )
+                # )
+
                 nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
                 whitelist.add(user['username'])
+
+            groups[group_name].append(f'grader-{course_id}')
 
             self._create_grader_directories(course_id)
 
