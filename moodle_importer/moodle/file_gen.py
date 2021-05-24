@@ -29,7 +29,7 @@ class FileGenerator(Processor):
     def __init__(self) -> None:
 
         self._temp_fn = self.BASE_DIR / 'data' / 'template.py'
-        self._out_fn = self.BASE_DIR / 'data' / 'jupyterhub_config.py'
+        self._out_fn = '/srv/jupyterhub/jupyterhub_config.py'
 
         super().__init__()
 

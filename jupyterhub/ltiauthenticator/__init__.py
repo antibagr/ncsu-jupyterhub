@@ -166,7 +166,7 @@ class LTIAuthenticator(Authenticator):
 
             return {
                 'name': user_name,
-                'auth_state': args # {k: v for k, v in args.items() if not k.startswith('oauth_')}
+                'auth_state': {k: v for k, v in args.items() if not k.startswith('oauth_')}
             }
 
 
