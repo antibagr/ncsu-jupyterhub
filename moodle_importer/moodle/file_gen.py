@@ -7,6 +7,7 @@ import re
 import typing as t
 from pathlib import Path
 import shutil
+import subprocess
 
 from secrets import token_hex
 
@@ -69,13 +70,14 @@ class FileGenerator(Processor):
 
             service = {
                 'name': course_id,
-                'url': 'http://127.0.0.1:9999',
+                'url': f'http://127.0.0.1:{9000 + courses.index(course)}',
                 'command': [
                     'jupyterhub-singleuser',
                     f'--group=formgrade-{course_id}',
                     '--debug',
+                    '--allow-root',
                 ],
-                'user': f'grader-{course_id}',
+#                 'user': f'grader-{course_id}',
                 'cwd': f'/home/grader-{course_id}',
                 'api_token': token_hex(32),
             }
@@ -109,13 +111,15 @@ class FileGenerator(Processor):
                 nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
                 whitelist.add(user['username'])
 
+#             subprocess.check_call(['useradd', '-ms', '/bin/bash', f'grader-{course_id}'])
             groups[group_name].append(f'grader-{course_id}')
             whitelist.add(f'grader-{course_id}')
 
             self._create_grader_directories(course_id)
 
             self._create_nbgrader_files(course_id)
-
+            os.system(f'chown -R 502 /home/grader-{course_id}')
+            os.system(f'mkdir -p /home/grader-{course_id}/.local/share')
         return {
             'admin_users': admin_users,
             'whitelist': whitelist,

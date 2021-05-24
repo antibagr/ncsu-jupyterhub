@@ -46,6 +46,8 @@ c.LTIAuthenticator.consumers = {
 
 c.Authenticator.enable_auth_state = True
 
+c.LocalAuthenticator.create_system_users = True
+
 # ---------------
 # SPAWNER
 # ---------------
