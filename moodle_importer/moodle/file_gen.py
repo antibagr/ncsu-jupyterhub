@@ -22,7 +22,7 @@ from .processor import Processor
 
 from .typehints import JsonType
 
-from moodle.templates import (NBGRADER_COURSE_CONFIG_TEMPLATE, NBGRADER_HOME_CONFIG_TEMPLATE, JUPYTERHUB_USERS)
+from moodle.templates import (NBGRADER_COURSE_CONFIG_TEMPLATE, NBGRADER_HOME_CONFIG_TEMPLATE, JUPYTERHUB_USERS, NBGRADER_HOME_CONFIG_TEMPLATE_SHORT)
 from moodle.settings import BASE_DIR, EXCHANGE_DIR, NB_UID, NB_GID
 
 class FileGenerator(Processor):
@@ -102,11 +102,11 @@ class FileGenerator(Processor):
 
                 user_home.mkdir(parents=True, exist_ok=True)
 
-                # user_home.joinpath('nbgrader_config.py').write_text(
-                # NBGRADER_COURSE_CONFIG_TEMPLATE.format(
-                #     course_id=course_id
-                # )
-                # )
+                user_home.joinpath('.jupyter').joinpath('nbgrader_config.py').write_text(
+                    NBGRADER_HOME_CONFIG_TEMPLATE_SHORT.format(
+                        db_url='sqlite:////srv/jupyterhub/grader.db',
+                    )
+                )
 
                 nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
                 whitelist.add(user['username'])

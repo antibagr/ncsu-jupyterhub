@@ -10,6 +10,11 @@ c.ClearSolutions.code_stub = {{
 c.CourseDirectory.db_url = '{db_url}'
 """
 
+NBGRADER_HOME_CONFIG_TEMPLATE_SHORT = """
+c = get_config()
+c.CourseDirectory.db_url = '{db_url}'
+"""
+
 
 NBGRADER_COURSE_CONFIG_TEMPLATE = """
 c = get_config()
