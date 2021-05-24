@@ -43,10 +43,6 @@ c.CourseDirectory.root = BASE_DIR
 
 c.JupyterHub.authenticator_class = 'ltiauthenticator.LTIAuthenticator'
 
-c.LTIAuthenticator.consumers = {
-    os.getenv('LTI_CONSUMER_KEY'): os.getenv('LTI_CONSUMER_SECRET'),
-}
-
 c.Authenticator.enable_auth_state = True
 
 # ---------------
@@ -64,8 +60,6 @@ c.JupyterHub.admin_access = True
 
 c.JupyterHub.spawner_class = 'simplespawner.SimpleLocalProcessSpawner'
 
-c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
-
 # c.SystemdSpawner.dynamic_users = True
 
 # c.SystemdSpawner.readwrite_paths = ['/srv/nbgrader/exchange']
@@ -75,6 +69,10 @@ c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
 
 c.Spawner.args = ['--debug', ]
 
+c.Authenticator.whitelist = {'student', 'test_student3', 'api_admin', 'test_teacher', 'test_ta', 'admin', 'test_student2', 'test_student'}
+
+
+c.Authenticator.admin_users = {'admin', 'api_admin'}
 
 def pre_spawn_hook(spawner):
 
@@ -94,7 +92,3 @@ def bind_auth_state(spawner, auth_state: dict) -> None:
 
 
 c.Spawner.auth_state_hook = bind_auth_state
-
-c.Spawner.pre_spawn_hook = pre_spawn_hook
-
-c.Spawner.args = ['--allow-root']
