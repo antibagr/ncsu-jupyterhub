@@ -14,8 +14,8 @@ from nbgrader.api import Assignment
 from nbgrader.api import Course
 from nbgrader.api import Gradebook
 from nbgrader.api import InvalidEntry
-from sqlalchemy_utils import create_database
-from sqlalchemy_utils import database_exists
+# from sqlalchemy_utils import create_database
+# from sqlalchemy_utils import database_exists
 
 from .processor import Processor
 
@@ -86,7 +86,9 @@ class FileGenerator(Processor):
 
             group_name = f'formgrade-{course_id}'
 
-            for grader in course['instructors'] + course['graders'] + [f'grader-{course_id}']:
+            for grader in course['instructors'] + course['graders'] + [{'username': f'grader-{course_id}'}]:
+
+                print(groups)
 
                 if group_name in groups:
                     groups[group_name].append(grader['username'])
@@ -99,7 +101,7 @@ class FileGenerator(Processor):
 
             for user in users:
                 nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
-                whitelist.update(user['username'])
+                whitelist.add(user['username'])
 
             self._create_grader_directories(course_id)
 
@@ -121,7 +123,8 @@ class FileGenerator(Processor):
         """
 
         course_dir = Path(f'/home/grader-{course_id}/{course_id}')
-        self.course_dir.mkdir(parents=True, exist_ok=True)
+
+        course_dir.mkdir(parents=True, exist_ok=True)
 
         # change the course directory owner
         shutil.chown(str(course_dir), user=NB_UID, group=NB_GID)
@@ -148,7 +151,7 @@ class FileGenerator(Processor):
         grader_nbconfig_path.write_text(NBGRADER_HOME_CONFIG_TEMPLATE.format(
             grader_name=f'grader-{course_id}',
             course_id=course_id,
-            db_url='sqlite'
+            db_url='sqlite:///srv/jupyterhub/grader.db'
         ))
 
         # Write the nbgrader_config.py file at grader home directory
@@ -159,7 +162,7 @@ class FileGenerator(Processor):
         )
 
         course_nbconfig_path.write_text(NBGRADER_COURSE_CONFIG_TEMPLATE.format(
-            course_id=self.course_id
+            course_id=course_id
         ))
 
 class NbGraderServiceHelper:
@@ -184,8 +187,8 @@ class NbGraderServiceHelper:
         self.uid = int(os.environ.get("NB_GRADER_UID") or "10001")
         self.gid = int(os.environ.get("NB_GID") or "100")
 
-        self.db_url = 'sqlite' # nbgrader_format_db_url(course_id)
-        self.database_name = f"{org_name}_{self.course_id}"
+        self.db_url = 'sqlite:////srv/jupyterhub/grader.db' # nbgrader_format_db_url(course_id)
+        self.database_name = course_id
         if check_database_exists:
             self.create_database_if_not_exists()
 
@@ -217,7 +220,7 @@ class NbGraderServiceHelper:
         with Gradebook(self.db_url, course_id=self.course_id) as gb:
             try:
                 gb.update_or_create_student(username, lms_user_id=lms_user_id)
-                logger.debug(
+                logging.debug(
                     "Added user %s with lms_user_id %s to gradebook"
                     % (username, lms_user_id)
                 )

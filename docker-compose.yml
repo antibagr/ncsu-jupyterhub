@@ -11,6 +11,8 @@ services:
       - ./.env
     volumes:
 
+      - ./moodle_importer:/srv/jupyterhub/moodle_importer
+
       - ./misc/backup:/backup
       - ./shell/backup.sh:/srv/jupyterhub/backup.sh
 
@@ -21,9 +23,9 @@ services:
       - ./jupyterhub/nbgrader_configuration/global_nbgrader_config.py:/etc/jupyter/nbgrader_config.py
 
       # Update nbgrader to ignore SSL certificate.
-      - ./nbgrader/handlers.py:/usr/local/lib/python3.8/dist-packages/nbgrader/server_extensions/course_list/handlers.py
+      - ./jupyterhub/nbgrader/handlers.py:/usr/local/lib/python3.8/dist-packages/nbgrader/server_extensions/course_list/handlers.py
 
       # Update LTI authenticator with patched verion
-      - ./jupyterhub/ltiauthenticator:/usr/local/lib/python3.8/dist-packages/ltiauthenticator
+      - ./jupyterhub/ltiauthenticator/:/usr/local/lib/python3.8/dist-packages/ltiauthenticator/
 
     command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log
