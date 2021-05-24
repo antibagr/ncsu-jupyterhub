@@ -1,6 +1,7 @@
 import os
 import platform
 import pwd
+import json
 import subprocess
 from os import path
 from unittest.mock import Mock
@@ -79,34 +80,16 @@ def pre_spawn_hook(spawner):
 
     username = spawner.user.name
 
-#    try:
-#        pwd.getpwnam(username)
-#    except KeyError:
-#        subprocess.check_call(['useradd', '-ms', '/bin/bash', username])
-
     if not os.path.exists(f'/home/{username}'):
         os.makedirs(f'/home/{username}')
 
-    if spawner.userdata['role'] == 'Instructor':
-       if not os.path.exists(f'/home/{username}/nbgrader_config.py'):
-           spawner.log.info(
-               'Initialize instructor\'s directory. Create nbgrader_config and test course')
-           with open(f'/home/{username}/nbgrader_config.py', 'w') as f:
-               f.write(f'''
-c = get_config()
-
-c.CourseDirectory.root = "/home/{username}/test_course"
-
-c.Exchange.path_includes_course = True
-''')
-           os.system(f'cd /home/{username} && nbgrader quickstart test_course')
-       # subprocess.check_call(f'su - {username} && jupyter serverextension disable --user nbgrader.server_extensions.formgrader'.split())
-
-    spawner.log.warning(spawner.userdata or 'NO AUTH STATE FOUND')
+    spawner.log.warning(
+        json.dumps(spawner.userdata or {'Data': 'Not Found'}, indent=4, sort_keys=True, ensure_ascii=False)
+    )
 
 
 def bind_auth_state(spawner, auth_state: dict) -> None:
-    spawner.log.info('bind auth state to a spawner')
+    spawner.log.info('Bind auth state to a spawner.')
     spawner.userdata = auth_state
 
 

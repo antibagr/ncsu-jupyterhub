@@ -18,3 +18,13 @@ c.CourseDirectory.course_id = '{course_id}'
 c.IncludeHeaderFooter.header = 'source/header.ipynb'
 c.IncludeHeaderFooter.footer = 'source/footer.ipynb'
 """
+
+JUPYTERHUB_USERS = """
+c.LTIAuthenticator.allowed_users = {whitelist}
+
+c.Authenticator.admin_users = {admin_users}
+
+c.JupyterHub.load_groups = {groups}
+
+c.JupyterHub.services = {services}
+"""

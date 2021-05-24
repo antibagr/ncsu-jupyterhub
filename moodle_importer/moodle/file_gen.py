@@ -21,7 +21,7 @@ from .processor import Processor
 
 from .typehints import JsonType
 
-from moodle.templates import NBGRADER_COURSE_CONFIG_TEMPLATE, NBGRADER_HOME_CONFIG_TEMPLATE
+from moodle.templates import (NBGRADER_COURSE_CONFIG_TEMPLATE, NBGRADER_HOME_CONFIG_TEMPLATE, JUPYTERHUB_USERS)
 from moodle.settings import BASE_DIR, EXCHANGE_DIR, NB_UID, NB_GID
 
 class FileGenerator(Processor):
@@ -29,7 +29,7 @@ class FileGenerator(Processor):
     def __init__(self) -> None:
 
         self._temp_fn = self.BASE_DIR / 'data' / 'template.py'
-        self._out_fn = self.BASE_DIR / 'data' / 'jupyterhub_config.py'
+        self._out_fn = '/srv/jupyterhub/jupyterhub_config.py'
 
         super().__init__()
 
@@ -40,14 +40,14 @@ class FileGenerator(Processor):
         '''
 
         with open(self._temp_fn, 'r') as f:
-            template = f.read()
+            base_config = f.read()
 
         if os.path.exists(self._out_fn):
             print(f'Warning! Old {self._out_fn} will be overwritten.')
 
         with open(self._out_fn, 'w') as f:
 
-            f.write(template.format(**self._parse_data()))
+            f.write(base_config + JUPYTERHUB_USERS.format(**self._parse_data()))
 
     def _parse_data(self) -> JsonType:
 
