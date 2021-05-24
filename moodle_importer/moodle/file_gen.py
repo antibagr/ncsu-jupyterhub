@@ -114,6 +114,7 @@ class FileGenerator(Processor):
                 continue
 
             groups[group_name].append(f'grader-{course_id}')
+            whitelist.add(f'grader-{course_id}')
 
             self._create_grader_directories(course_id)
 
