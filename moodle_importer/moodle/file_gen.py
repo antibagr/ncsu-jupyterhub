@@ -160,7 +160,7 @@ class FileGenerator(Processor):
         grader_nbconfig_path.write_text(NBGRADER_HOME_CONFIG_TEMPLATE.format(
             grader_name=f'grader-{course_id}',
             course_id=course_id,
-            db_url='sqlite:///srv/jupyterhub/grader.db'
+            db_url='sqlite:////srv/jupyterhub/grader.db'
         ))
 
         # Write the nbgrader_config.py file at grader home directory
