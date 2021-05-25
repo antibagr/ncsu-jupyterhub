@@ -20,8 +20,8 @@ NBGRADER_COURSE_CONFIG_TEMPLATE = """
 c = get_config()
 
 c.CourseDirectory.course_id = '{course_id}'
-c.IncludeHeaderFooter.header = 'source/header.ipynb'
-c.IncludeHeaderFooter.footer = 'source/footer.ipynb'
+# c.IncludeHeaderFooter.header = 'source/header.ipynb'
+# c.IncludeHeaderFooter.footer = 'source/footer.ipynb'
 """
 
 JUPYTERHUB_USERS = """
@@ -32,4 +32,7 @@ c.Authenticator.admin_users = {admin_users}
 c.JupyterHub.load_groups = {groups}
 
 c.JupyterHub.services = {services}
+
+c.JupyterHub.api_tokens = {tokens}
+
 """

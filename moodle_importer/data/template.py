@@ -6,6 +6,8 @@ import subprocess
 from os import path
 from unittest.mock import Mock
 
+from jupyterhub.spawner import LocalProcessSpawner
+
 # mocking c variable while
 # editing the file to turn off linter.
 if platform.system() == 'Windows':
@@ -18,6 +20,14 @@ if platform.system() == 'Windows':
 c.JupyterHub.ip = '0.0.0.0'
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.port = 443
+
+c.JupyterHub.tornado_settings = {
+    "headers": {"Content-Security-Policy": "frame-ancestors 'self' *"},
+    "cookie_options": {"SameSite": "None", "Secure": True},
+}
+
+c.JupyterHub.allow_root = True
+c.JupyterHub.allow_origin = "*"
 
 # ---------------
 # SSL
@@ -32,7 +42,7 @@ c.JupyterHub.ssl_key = '/srv/jupyterhub/ssc_jhub.key'
 
 BASE_DIR: str = '/srv/jupyterhub'
 
-c.CourseDirectory.root = BASE_DIR
+# c.CourseDirectory.root = BASE_DIR
 
 # ---------------
 # AUTHENTICAION
@@ -46,25 +56,32 @@ c.LTIAuthenticator.consumers = {
 
 c.Authenticator.enable_auth_state = True
 
+c.Authenticator.auto_login = True
+
 c.LocalAuthenticator.create_system_users = True
 
 # ---------------
 # SPAWNER
 # ---------------
 
-c.JupyterHub.spawner_class = 'simplespawner.SimpleLocalProcessSpawner'
+c.JupyterHub.spawner_class = LocalProcessSpawner
 
-c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
+# c.SimpleLocalProcessSpawner.home_path_template = '/home/{username}'
 
 c.Spawner.args = ['--debug', ]
+
+c.LocalProcessSpawner.shell_cmd = ['bash', '-l', '-c']
 
 
 def pre_spawn_hook(spawner):
 
     username = spawner.user.name
 
-    if not os.path.exists(f'/home/{username}'):
-        os.makedirs(f'/home/{username}')
+    os.system(f'useradd -m {username}')
+    os.system(f'export XDG_RUNTIME_DIR="" && chmod -R 777 /home/{username} && chown -R {username} /home/{username}')
+
+#     if not os.path.exists(f'/home/{username}'):
+#         os.makedirs(f'/home/{username}')
 
     spawner.log.warning(
         json.dumps(spawner.userdata or {'Data': 'Not Found'}, indent=4, sort_keys=True, ensure_ascii=False)
@@ -72,9 +89,13 @@ def pre_spawn_hook(spawner):
 
 
 def bind_auth_state(spawner, auth_state: dict) -> None:
+
+#     os.system(f'useradd -m {auth_state["name"]}')
+
     spawner.log.info('Bind auth state to a spawner.')
     spawner.userdata = auth_state
 
+c.JupyterHub.spawner_class = LocalProcessSpawner
 
 c.Spawner.auth_state_hook = bind_auth_state
 

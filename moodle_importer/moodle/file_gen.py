@@ -8,6 +8,7 @@ import typing as t
 from pathlib import Path
 import shutil
 import subprocess
+import json
 
 from secrets import token_hex
 
@@ -32,6 +33,8 @@ class FileGenerator(Processor):
         self._temp_fn = self.BASE_DIR / 'data' / 'template.py'
         self._out_fn = '/srv/jupyterhub/jupyterhub_config.py'
 
+        self._tokens_fn = self.BASE_DIR / 'data' / 'tokens.json'
+
         super().__init__()
 
     def generate(self):
@@ -48,7 +51,36 @@ class FileGenerator(Processor):
 
         with open(self._out_fn, 'w') as f:
 
-            f.write(base_config + JUPYTERHUB_USERS.format(**self._parse_data()))
+            data = self._parse_data()
+
+            f.write(base_config + JUPYTERHUB_USERS.format(**data))
+
+        with open(self._tokens_fn, 'w') as f:
+            json.dumps(data['tokens'])
+
+    def add_users(self):
+        courses = self.load_json()
+
+        with open(self._tokens_fn, 'r') as f:
+            tokens = {v: k for k, v in json.loads(f)}
+        for course in courses:
+
+            os.environ[''] = '1'
+
+            course_id = course['short_name']
+
+            os.environ['JUPYTERHUB_USER'] = f'grader-{course_id}'
+
+            os.environ['JUPYTERHUB_API_TOKEN'] = tokens[f'grader-{course_id}']
+
+            for user in course['instructors'] + course['graders'] + course['students']:
+                os.system(f'''
+nbgrader db student add {user["username"]} --last-name={user["last_name"]} --first-name={user["first_name"]} \
+--course-dir=/home/grader-{course_id}/{course_id} \
+--CourseDirectory.course_id={course_id} \
+--email={user["email"]} \
+--db=sqlite:////srv/jupyterhub/grader.db
+''')
 
     def _parse_data(self) -> JsonType:
 
@@ -60,16 +92,27 @@ class FileGenerator(Processor):
 
         groups = {}
 
+        tokens = {}
+
         services = []
 
         for course in courses:
 
             course_id: str = re.sub('\W', '_', course['short_name'].lower())
 
+            grader = f'grader-{course_id}'
+            
+            os.system('useradd -m {grader}')
+
             nb_helper = NbGraderServiceHelper(course_id)
+
+            service_token = token_hex(32)
+
+            tokens[service_token] = f'grader-{course_id}'
 
             service = {
                 'name': course_id,
+                "admin": True,
                 'url': f'http://127.0.0.1:{9000 + courses.index(course)}',
                 'command': [
                     'jupyterhub-singleuser',
@@ -77,14 +120,17 @@ class FileGenerator(Processor):
                     '--debug',
                     '--allow-root',
                 ],
-#                 'user': f'grader-{course_id}',
+                'user': f'grader-{course_id}',
                 'cwd': f'/home/grader-{course_id}',
-                'api_token': token_hex(32),
+                'api_token': service_token,
+                'environment': {'JUPYTERHUB_SERVICE_USER': f'grader-{course_id}'}
             }
 
             services.append(service)
 
             admin_users.update(x['username'] for x in course['instructors'])
+
+            admin_users.add(f'grader-{course_id}')
 
             group_name = f'formgrade-{course_id}'
 
@@ -92,19 +138,23 @@ class FileGenerator(Processor):
 
             groups[group_name] = []
 
+            self._create_grader_directories(course_id)
+            self._create_nbgrader_files(course_id)
+
+
             for user in users:
 
                 if user['role'] != 'student':
 
                     groups[group_name].append(user['username'])
 
-                user_home: Path = Path(f'/home{user["username"]}')
+                user_home: Path = Path(f'/home/{user["username"]}/.jupyter')
 
                 user_home.mkdir(parents=True, exist_ok=True)
 
-                user_home.joinpath('.jupyter').joinpath('nbgrader_config.py').write_text(
+                user_home.joinpath('nbgrader_config.py').write_text(
                     NBGRADER_HOME_CONFIG_TEMPLATE_SHORT.format(
-                        db_url='sqlite:////srv/jupyterhub/grader.db',
+                        db_url='sqlite:///' + f'/home/grader-{course_id}/{course_id}_grader.db',
                     )
                 )
 
@@ -115,15 +165,18 @@ class FileGenerator(Processor):
             groups[group_name].append(f'grader-{course_id}')
             whitelist.add(f'grader-{course_id}')
 
-            self._create_grader_directories(course_id)
 
-            self._create_nbgrader_files(course_id)
-            os.system(f'chown -R 502 /home/grader-{course_id}')
-            os.system(f'mkdir -p /home/grader-{course_id}/.local/share')
+
+#             os.system(f'useradd grader-{course_id} || true')
+#             os.system(f'chown -R 502 /home/grader-{course_id}')
+#             os.system(f'chown -R grader-{course_id} /home/grader-{course_id}')
+
+        print(tokens)
         return {
             'admin_users': admin_users,
             'whitelist': whitelist,
             'groups': groups,
+            'tokens': tokens,
             'services': services,
         }
 
@@ -161,10 +214,16 @@ class FileGenerator(Processor):
 
         grader_nbconfig_path = jupyter_dir.joinpath("nbgrader_config.py")
 
+        username = f'grader-{course_id}'
+
+        os.system(f'useradd -m {username} || true && mkdir -p /home/{username}')
+#         os.system(f'touch /home/{username}/{course_id}_grader.db && chown -R {username}:{username} /home/{username}')
+#         os.system(f'chmod 664 /home/{username}')
+
         grader_nbconfig_path.write_text(NBGRADER_HOME_CONFIG_TEMPLATE.format(
             grader_name=f'grader-{course_id}',
             course_id=course_id,
-            db_url='sqlite:////srv/jupyterhub/grader.db'
+            db_url='sqlite:///' + f'/home/grader-{course_id}/{course_id}_grader.db'
         ))
 
         # Write the nbgrader_config.py file at grader home directory
@@ -196,11 +255,11 @@ class NbGraderServiceHelper:
             raise ValueError("course_id missing")
 
         self.course_id = course_id
-        self.course_dir = f"/home/grader-{self.course_id}/{self.course_id}"
+        self.course_dir = f"/home/grader-{course_id}/{course_id}"
         self.uid = int(os.environ.get("NB_GRADER_UID") or "10001")
         self.gid = int(os.environ.get("NB_GID") or "100")
 
-        self.db_url = 'sqlite:////srv/jupyterhub/grader.db' # nbgrader_format_db_url(course_id)
+        self.db_url = 'sqlite:///' + f'/home/grader-{course_id}/{course_id}_grader.db'
         self.database_name = course_id
         if check_database_exists:
             self.create_database_if_not_exists()

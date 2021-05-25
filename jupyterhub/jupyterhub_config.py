@@ -6,6 +6,9 @@ import subprocess
 from os import path
 from unittest.mock import Mock
 
+from jupyterhub.spawner import LocalProcessSpawner
+
+
 # mocking c variable while
 # editing the file to turn off linter.
 if platform.system() == 'Windows':
@@ -61,8 +64,10 @@ def pre_spawn_hook(spawner):
 
     username = spawner.user.name
 
-    if not os.path.exists(f'/home/{username}'):
-        os.makedirs(f'/home/{username}')
+    os.system(f'useradd -m {username}')
+
+#     if not os.path.exists(f'/home/{username}'):
+#         os.makedirs(f'/home/{username}')
 
     spawner.log.warning(
         json.dumps(spawner.userdata or {'Data': 'Not Found'}, indent=4, sort_keys=True, ensure_ascii=False)
@@ -70,6 +75,9 @@ def pre_spawn_hook(spawner):
 
 
 def bind_auth_state(spawner, auth_state: dict) -> None:
+
+    raise Exception('testing')
+
     spawner.log.info('Bind auth state to a spawner.')
     spawner.userdata = auth_state
 
@@ -85,3 +93,5 @@ c.Spawner.args = ['--allow-root']
 # ---------------
 
 c.JupyterHub.admin_access = True
+
+c.JupyterHub.spawner_class = LocalProcessSpawner
