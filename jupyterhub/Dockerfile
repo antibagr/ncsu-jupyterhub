@@ -21,8 +21,6 @@ RUN mkdir -p /srv/nbgrader/exchange && \
     mkdir -p /etc/jupyter && \
     chmod ugo+rw /etc/jupyter
 
-# COPY ./jupyterhub_config.py .
-
-RUN apt-get update && apt-get install nano
+RUN apt-get update && apt-get install nano bash
 
 COPY jupyterhub_config.py .

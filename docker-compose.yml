@@ -9,8 +9,8 @@ services:
       - 443:443
     env_file:
       - ./.env
+
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
 
       - ./moodle_importer:/srv/jupyterhub/moodle_importer
 
@@ -20,7 +20,6 @@ services:
       - /root/certificates/jhub-dev_cos_ncsu_edu_cert.cer:/srv/jupyterhub/ssc_jhub.crt:ro
       - /root/certificates/jhub-dev.cos.ncsu.edu.key:/srv/jupyterhub/ssc_jhub.key:ro
 
-#       - ./jupyterhub/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
       - ./jupyterhub/nbgrader_configuration/nbgrader_global_config.py:/etc/jupyter/nbgrader_config.py
 
       # Update nbgrader to ignore SSL certificate.

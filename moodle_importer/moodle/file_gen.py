@@ -1,39 +1,51 @@
 """
 File generator
 """
-import os
+
+import json
 import logging
+import os
 import re
-import typing as t
-from pathlib import Path
 import shutil
 import subprocess
-import json
-
+import typing as t
+from pathlib import Path
 from secrets import token_hex
 
-from nbgrader.api import Assignment
-from nbgrader.api import Course
-from nbgrader.api import Gradebook
-from nbgrader.api import InvalidEntry
+from moodle.settings import BASE_DIR, EXCHANGE_DIR, NB_GID, NB_UID
+from moodle.templates import (JUPYTERHUB_USERS,
+                              NBGRADER_COURSE_CONFIG_TEMPLATE,
+                              NBGRADER_HOME_CONFIG_TEMPLATE,
+                              NBGRADER_HOME_CONFIG_TEMPLATE_SHORT)
+
+from nbgrader.api import Assignment, Course, Gradebook, InvalidEntry
+
+from .processor import Processor
+from .typehints import JsonType
+
 # from sqlalchemy_utils import create_database
 # from sqlalchemy_utils import database_exists
 
-from .processor import Processor
-
-from .typehints import JsonType
-
-from moodle.templates import (NBGRADER_COURSE_CONFIG_TEMPLATE, NBGRADER_HOME_CONFIG_TEMPLATE, JUPYTERHUB_USERS, NBGRADER_HOME_CONFIG_TEMPLATE_SHORT)
-from moodle.settings import BASE_DIR, EXCHANGE_DIR, NB_UID, NB_GID
 
 class FileGenerator(Processor):
 
     def __init__(self) -> None:
 
-        self._temp_fn = self.BASE_DIR / 'data' / 'template.py'
+        self._temp_fn = self.BASE_DIR / '..' / 'jupyterhub' / 'jupyterhub_config.py'
+
         self._out_fn = '/srv/jupyterhub/jupyterhub_config.py'
 
         self._tokens_fn = self.BASE_DIR / 'data' / 'tokens.json'
+
+        self.admin_users: t.Set = set()
+        self.whitelist: t.Set = set()
+
+        self.courses: JsonType = []
+
+        self.groups: JsonType = {}
+        self.tokens: t.Dict[str, str] = {}
+
+        self.services: t.List[dict] = []
 
         super().__init__()
 
@@ -49,23 +61,29 @@ class FileGenerator(Processor):
         if os.path.exists(self._out_fn):
             print(f'Warning! Old {self._out_fn} will be overwritten.')
 
+        self.parse_data()
+
         with open(self._out_fn, 'w') as f:
 
-            data = self._parse_data()
-
-            f.write(base_config + JUPYTERHUB_USERS.format(**data))
+            f.write(base_config + JUPYTERHUB_USERS.format(**{
+                'admin_users': self.admin_users,
+                'whitelist': self.whitelist,
+                'groups': self.groups,
+                'tokens': self.tokens,
+                'services': self.services,
+            }))
 
         with open(self._tokens_fn, 'w') as f:
-            json.dumps(data['tokens'])
+            json.dumps(self.tokens)
 
     def add_users(self):
+
         courses = self.load_json()
 
         with open(self._tokens_fn, 'r') as f:
             tokens = {v: k for k, v in json.loads(f)}
-        for course in courses:
 
-            os.environ[''] = '1'
+        for course in courses:
 
             course_id = course['short_name']
 
@@ -74,266 +92,142 @@ class FileGenerator(Processor):
             os.environ['JUPYTERHUB_API_TOKEN'] = tokens[f'grader-{course_id}']
 
             for user in course['instructors'] + course['graders'] + course['students']:
+
                 os.system(f'''
 nbgrader db student add {user["username"]} --last-name={user["last_name"]} --first-name={user["first_name"]} \
 --course-dir=/home/grader-{course_id}/{course_id} \
 --CourseDirectory.course_id={course_id} \
 --email={user["email"]} \
---db=sqlite:////srv/jupyterhub/grader.db
+--db=sqlite:////home/grader-{course_id}/{course_id}_grader.db
 ''')
 
-    def _parse_data(self) -> JsonType:
+    def create_service(self, course_id: str, api_token: str, port: int = 0) -> dict:
+        return {
+            'name': course_id,
+            "admin": True,
+            'url': f'http://127.0.0.1:{9000 + port}',
+            'command': [
+                'jupyterhub-singleuser',
+                f'--group=formgrade-{course_id}',
+                '--debug',
+                '--allow-root',
+            ],
+            'user': f'grader-{course_id}',
+            'cwd': f'/home/grader-{course_id}',
+            'api_token': api_token,
+            'environment': {'JUPYTERHUB_SERVICE_USER': f'grader-{course_id}'}
+        }
 
-        courses = self.load_json()
+    def update_services(self, grader: str, course_id: str, port: int = 0) -> None:
 
-        admin_users = set()
+        service_token = token_hex(32)
 
-        whitelist = set()
+        self.tokens[service_token] = grader
 
-        groups = {}
+        self.services.append(
+            self.create_service(
+                course_id, service_token, port
+            )
+        )
 
-        tokens = {}
+    def update_admins(self, course: dict, grader: str) -> None:
 
-        services = []
+        self.admin_users.update(x['username'] for x in course['instructors'])
+        self.admin_users.add(grader)
 
-        for course in courses:
+    def write_config(self, path: str, course_id: str, home: bool = False) -> None:
+
+        if home:
+            path = f'/home/' + path
+
+        with open(f'{path}/nbgrader_config.py', 'w') as f:
+            f.write(
+                NBGRADER_HOME_CONFIG_TEMPLATE_SHORT.format(
+                    db_url='sqlite:///'
+                    + f'/home/grader-{course_id}/grader.db',
+                )
+            )
+
+    def write_grader_config(self, grader: str, course_id: str) -> None:
+
+        with open(f'/home/{grader}/{course_id}/.jupyter/nbgrader_config.py', 'w') as f:
+            f.write(
+                NBGRADER_HOME_CONFIG_TEMPLATE.format(
+                    grader_name=grader,
+                    course_id=course_id,
+                    db_url='sqlite:///' + f'/home/{grader}/grader.db'
+                )
+            )
+
+    def create_user(self, username: str) -> None:
+
+        os.system(f'adduser -q --gecos "" --disabled-password {username}')
+        # os.system(f'chmod 664 /home/{username}')
+        # os.system(f'chown -R {username}:{username} /home/{username}')
+        ...
+
+    def create_grader(self, grader: str, course_id: str) -> None:
+
+        self.create_user(grader)
+
+        course_dir = Path(f'/home/{grader}/{course_id}')
+
+        jupyter = str(course_dir.parent / '.jupyter')
+
+        os.system(f'mkdir -p {jupyter}')
+        os.system(f'chown -R {jupyter}')
+
+        self.write_config(str(course_dir), course_id)
+
+        self.write_grader_config(grader, course_id)
+
+    def get_db(self, grader: str, course_id: str) -> Gradebook:
+        return Gradebook(f'sqlite:////home/{grader}/grader.db', course_id=course_id)
+
+    def parse_data(self) -> None:
+
+        self.courses = self.load_json()
+
+        for course in self.courses:
 
             course_id: str = re.sub('\W', '_', course['short_name'].lower())
 
             grader = f'grader-{course_id}'
-            
-            os.system('useradd -m {grader}')
-
-            nb_helper = NbGraderServiceHelper(course_id)
-
-            service_token = token_hex(32)
-
-            tokens[service_token] = f'grader-{course_id}'
-
-            service = {
-                'name': course_id,
-                "admin": True,
-                'url': f'http://127.0.0.1:{9000 + courses.index(course)}',
-                'command': [
-                    'jupyterhub-singleuser',
-                    f'--group=formgrade-{course_id}',
-                    '--debug',
-                    '--allow-root',
-                ],
-                'user': f'grader-{course_id}',
-                'cwd': f'/home/grader-{course_id}',
-                'api_token': service_token,
-                'environment': {'JUPYTERHUB_SERVICE_USER': f'grader-{course_id}'}
-            }
-
-            services.append(service)
-
-            admin_users.update(x['username'] for x in course['instructors'])
-
-            admin_users.add(f'grader-{course_id}')
 
             group_name = f'formgrade-{course_id}'
 
-            users = course['instructors'] + course['graders'] + course['students']
+            self.update_services(grader, course_id, self.courses.index(course))
 
-            groups[group_name] = []
+            self.update_admins(course, grader)
 
-            self._create_grader_directories(course_id)
-            self._create_nbgrader_files(course_id)
+            self.groups[group_name] = []
 
+            self.create_grader(grader, course_id)
 
-            for user in users:
+            self.groups[group_name].append(grader)
+
+            self.whitelist.add(grader)
+
+            course_db = self.get_db(grader, course_id)
+
+            for user in course['instructors'] + course['graders'] + course['students']:
 
                 if user['role'] != 'student':
 
-                    groups[group_name].append(user['username'])
+                    self.groups[group_name].append(user['username'])
 
-                user_home: Path = Path(f'/home/{user["username"]}/.jupyter')
+                if user['role'] not in ('teacher', 'editingteacher', 'instructor'):
 
-                user_home.mkdir(parents=True, exist_ok=True)
-
-                user_home.joinpath('nbgrader_config.py').write_text(
-                    NBGRADER_HOME_CONFIG_TEMPLATE_SHORT.format(
-                        db_url='sqlite:///' + f'/home/grader-{course_id}/{course_id}_grader.db',
+                    course_db.update_or_create_student(
+                        user['username'],
+                        first_name=user['first_name'],
+                        last_name=user['last_name'],
+                        email=user['email'],
+                        lms_user_id=user['id'],
                     )
-                )
 
-                nb_helper.add_user_to_nbgrader_gradebook(user['username'], user['id'])
-                whitelist.add(user['username'])
+                self.create_user(user)
 
-#             subprocess.check_call(['useradd', '-ms', '/bin/bash', f'grader-{course_id}'])
-            groups[group_name].append(f'grader-{course_id}')
-            whitelist.add(f'grader-{course_id}')
+                self.whitelist.add(user['username'])
 
-
-
-#             os.system(f'useradd grader-{course_id} || true')
-#             os.system(f'chown -R 502 /home/grader-{course_id}')
-#             os.system(f'chown -R grader-{course_id} /home/grader-{course_id}')
-
-        print(tokens)
-        return {
-            'admin_users': admin_users,
-            'whitelist': whitelist,
-            'groups': groups,
-            'tokens': tokens,
-            'services': services,
-        }
-
-    def _create_grader_directories(self, course_id: str) -> None:
-        """
-        Creates home directories with specific permissions
-        Directories to create:
-        - grader_root: /home/grader-<course-id>
-        - course_root: /home/grader-<course-id>/<course-id>
-        """
-
-        course_dir = Path(f'/home/grader-{course_id}/{course_id}')
-
-        course_dir.mkdir(parents=True, exist_ok=True)
-
-        # change the course directory owner
-        shutil.chown(str(course_dir), user=NB_UID, group=NB_GID)
-        shutil.chown(str(course_dir.parent), user=NB_UID, group=NB_GID)
-
-    def _create_nbgrader_files(self, course_id: str) -> None:
-        """
-        Creates nbgrader configuration files
-        used in the grader's home directory
-        and the course directory located
-        within the grader's home directory.
-        """
-
-        course_dir = Path(f'/home/grader-{course_id}/{course_id}')
-
-        # create the .jupyter directory (a child of grader_root)
-        jupyter_dir = course_dir.parent.joinpath(".jupyter")
-        jupyter_dir.mkdir(parents=True, exist_ok=True)
-
-        shutil.chown(str(jupyter_dir), user=NB_UID, group=NB_GID)
-
-        grader_nbconfig_path = jupyter_dir.joinpath("nbgrader_config.py")
-
-        username = f'grader-{course_id}'
-
-        os.system(f'useradd -m {username} || true && mkdir -p /home/{username}')
-#         os.system(f'touch /home/{username}/{course_id}_grader.db && chown -R {username}:{username} /home/{username}')
-#         os.system(f'chmod 664 /home/{username}')
-
-        grader_nbconfig_path.write_text(NBGRADER_HOME_CONFIG_TEMPLATE.format(
-            grader_name=f'grader-{course_id}',
-            course_id=course_id,
-            db_url='sqlite:///' + f'/home/grader-{course_id}/{course_id}_grader.db'
-        ))
-
-        # Write the nbgrader_config.py file at grader home directory
-        course_nbconfig_path = course_dir.joinpath("nbgrader_config.py")
-
-        course_home_nbconfig_content = NBGRADER_COURSE_CONFIG_TEMPLATE.format(
-            course_id=course_id
-        )
-
-        course_nbconfig_path.write_text(NBGRADER_COURSE_CONFIG_TEMPLATE.format(
-            course_id=course_id
-        ))
-
-class NbGraderServiceHelper:
-    """
-    Helper class to use the nbgrader database and gradebook
-
-    Attrs:
-      course_id: the course id (equivalent to the course name)
-      course_dir: the course directory located in the grader home directory
-      uid: the user id that owns the grader home directory
-      gid: the group id that owns the grader home directory
-      db_url: the database string connection uri
-      database_name: the database name
-    """
-
-    def __init__(self, course_id: str, check_database_exists: bool = False):
-        if not course_id:
-            raise ValueError("course_id missing")
-
-        self.course_id = course_id
-        self.course_dir = f"/home/grader-{course_id}/{course_id}"
-        self.uid = int(os.environ.get("NB_GRADER_UID") or "10001")
-        self.gid = int(os.environ.get("NB_GID") or "100")
-
-        self.db_url = 'sqlite:///' + f'/home/grader-{course_id}/{course_id}_grader.db'
-        self.database_name = course_id
-        if check_database_exists:
-            self.create_database_if_not_exists()
-
-    def create_database_if_not_exists(self) -> None:
-        """Creates a new database if it doesn't exist"""
-
-        raise Exception()
-        # conn_uri = nbgrader_format_db_url(self.course_id)
-        #
-        # if not database_exists(conn_uri):
-        #     logger.debug("db not exist, create database")
-        #     create_database(conn_uri)
-
-    def add_user_to_nbgrader_gradebook(self, username: str, lms_user_id: str) -> None:
-        """
-        Adds a user to the nbgrader gradebook database for the course.
-
-        Args:
-            username: The user's username
-            lms_user_id: The user's id on the LMS
-        Raises:
-            InvalidEntry: when there was an error adding the user to the database
-        """
-        if not username:
-            raise ValueError("username missing")
-        if not lms_user_id:
-            raise ValueError("lms_user_id missing")
-
-        with Gradebook(self.db_url, course_id=self.course_id) as gb:
-            try:
-                gb.update_or_create_student(username, lms_user_id=lms_user_id)
-                logging.debug(
-                    "Added user %s with lms_user_id %s to gradebook"
-                    % (username, lms_user_id)
-                )
-            except InvalidEntry as e:
-                logger.debug("Error during adding student to gradebook: %s" % e)
-
-    def update_course(self, **kwargs) -> None:
-        """
-        Updates the course in nbgrader database
-        """
-        with Gradebook(self.db_url, course_id=self.course_id) as gb:
-            gb.update_course(self.course_id, **kwargs)
-
-    def get_course(self) -> Course:
-        """
-        Gets the course model instance
-        """
-        with Gradebook(self.db_url, course_id=self.course_id) as gb:
-            course = gb.check_course(self.course_id)
-            logger.debug(f"course got from db:{course}")
-            return course
-
-    def register_assignment(self, assignment_name: str, **kwargs: dict) -> Assignment:
-        """
-        Adds an assignment to nbgrader database
-
-        Args:
-            assignment_name: The assingment's name
-        Raises:
-            InvalidEntry: when there was an error adding the assignment to the database
-        """
-        if not assignment_name:
-            raise ValueError("assignment_name missing")
-        logger.debug(
-            "Assignment name normalized %s to save in gradebook" % assignment_name
-        )
-        assignment = None
-        with Gradebook(self.db_url, course_id=self.course_id) as gb:
-            try:
-                assignment = gb.update_or_create_assignment(assignment_name, **kwargs)
-                logger.debug("Added assignment %s to gradebook" % assignment_name)
-            except InvalidEntry as e:
-                logger.debug("Error ocurred by adding assignment to gradebook: %s" % e)
-        return assignment
+                self.write_config(user['username'], course_id, home=True)

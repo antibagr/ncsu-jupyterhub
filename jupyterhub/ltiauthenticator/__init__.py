@@ -1,20 +1,19 @@
-import os
 import logging
+import os
 import time
+from collections import OrderedDict
 from datetime import datetime
 
-
-from traitlets import Dict
+from oauthlib.oauth1.rfc5849 import signature
 from tornado import gen, web
+from traitlets import Dict
 
-from jupyterhub.auth import Authenticator
+from jupyterhub.auth import Authenticator, LocalAuthenticator
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.utils import url_path_join
 
-from oauthlib.oauth1.rfc5849 import signature
-from collections import OrderedDict
-
 __version__ = '1.0.0'
+
 
 class LTILaunchValidator:
     # Record time when process starts, so we can reject requests made
@@ -74,9 +73,10 @@ class LTILaunchValidator:
                 oauth_timestamp in LTILaunchValidator.nonces
                 and args['oauth_nonce'] in LTILaunchValidator.nonces[oauth_timestamp]
         ):
-            raise web.HTTPError(401, "oauth_nonce + oauth_timestamp already used")
-        LTILaunchValidator.nonces.setdefault(oauth_timestamp, set()).add(args['oauth_nonce'])
-
+            raise web.HTTPError(
+                401, "oauth_nonce + oauth_timestamp already used")
+        LTILaunchValidator.nonces.setdefault(
+            oauth_timestamp, set()).add(args['oauth_nonce'])
 
         args_list = []
         for key, values in args.items():
@@ -103,7 +103,7 @@ class LTILaunchValidator:
         return True
 
 
-class LTIAuthenticator(Authenticator):
+class LTIAuthenticator(Authenticator, LocalAuthenticator):
     """
     JupyterHub Authenticator for use with LTI based services (EdX, Canvas, etc)
     """
@@ -127,7 +127,6 @@ class LTIAuthenticator(Authenticator):
             ('/lti/launch', LTIAuthenticateHandler)
         ]
 
-
     @gen.coroutine
     def authenticate(self, handler, data=None):
         # FIXME: Run a process that cleans up old nonces every other minute
@@ -135,13 +134,15 @@ class LTIAuthenticator(Authenticator):
 
         args = {}
         for k, values in handler.request.body_arguments.items():
-            args[k] = values[0].decode() if len(values) == 1 else [v.decode() for v in values]
+            args[k] = values[0].decode() if len(values) == 1 else [
+                                       v.decode() for v in values]
 
         # handle multiple layers of proxied protocol (comma separated) and take the outermost
         if 'x-forwarded-proto' in handler.request.headers:
             # x-forwarded-proto might contain comma delimited values
             # left-most value is the one sent by original client
-            hops = [h.strip() for h in handler.request.headers['x-forwarded-proto'].split(',')]
+            hops = [h.strip()
+                    for h in handler.request.headers['x-forwarded-proto'].split(',')]
             protocol = hops[0]
         else:
             protocol = handler.request.protocol
@@ -160,7 +161,8 @@ class LTIAuthenticator(Authenticator):
                 args["role"] = args["roles"].split(",")[0]
                 self.log.debug("User LTI role is: %s" % user_role)
             else:
-                raise HTTPError(400, "User role not included in the LTI request")
+                raise HTTPError(
+                    400, "User role not included in the LTI request")
 
             user_name = handler.get_body_argument('ext_user_username')
 
@@ -168,7 +170,6 @@ class LTIAuthenticator(Authenticator):
                 'name': user_name,
                 'auth_state': {k: v for k, v in args.items() if not k.startswith('oauth_')}
             }
-
 
     def login_url(self, base_url):
         return url_path_join(base_url, '/lti/launch')
@@ -187,31 +188,11 @@ class LTIAuthenticateHandler(BaseHandler):
 
     def set_login_cookie(self, user):
         super().set_login_cookie(user)
-
-        ## Make sure that hub cookie is always set, even if the user was already logged in
         self.set_hub_cookie(user)
 
     @gen.coroutine
     def post(self):
-        """
-        Technical reference of relevance to understand this function
-        ------------------------------------------------------------
-        1. Class dependencies
-           - jupyterhub.handlers.BaseHandler: https://github.com/jupyterhub/jupyterhub/blob/abb93ad799865a4b27f677e126ab917241e1af72/jupyterhub/handlers/base.py#L69
-           - tornado.web.RequestHandler: https://www.tornadoweb.org/en/stable/web.html#tornado.web.RequestHandler
-        2. Function dependencies
-           - login_user: https://github.com/jupyterhub/jupyterhub/blob/abb93ad799865a4b27f677e126ab917241e1af72/jupyterhub/handlers/base.py#L696-L715
-             login_user is defined in the JupyterHub wide BaseHandler class,
-             mainly wraps a call to the authenticate function and follow up.
-             a successful authentication with a call to auth_to_user that
-             persists a JupyterHub user and returns it.
-           - get_next_url: https://github.com/jupyterhub/jupyterhub/blob/abb93ad799865a4b27f677e126ab917241e1af72/jupyterhub/handlers/base.py#L587
-           - get_body_argument: https://www.tornadoweb.org/en/stable/web.html#tornado.web.RequestHandler.get_body_argument
-        """
-        # FIXME: Figure out if we want to pass the user returned from
-        #        self.login_user() to self.get_next_url(). It is named
-        #        _ for now as pyflakes is fine about having an unused
-        #        variable named _.
+
         _ = yield self.login_user()
         next_url = self.get_next_url()
         body_argument = self.get_body_argument(
