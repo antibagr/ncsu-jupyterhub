@@ -103,7 +103,7 @@ class LTILaunchValidator:
         return True
 
 
-class LTIAuthenticator(Authenticator, LocalAuthenticator):
+class LTIAuthenticator(Authenticator):
     """
     JupyterHub Authenticator for use with LTI based services (EdX, Canvas, etc)
     """

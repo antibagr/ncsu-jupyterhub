@@ -30,7 +30,7 @@ class FileGenerator(Processor):
 
     def __init__(self) -> None:
 
-        self._temp_fn = self.BASE_DIR / '..' / 'jupyterhub' / 'jupyterhub_config.py'
+        self._temp_fn = self.BASE_DIR / 'jupyterhub_config.py'
 
         self._out_fn = '/srv/jupyterhub/jupyterhub_config.py'
 
@@ -57,10 +57,14 @@ class FileGenerator(Processor):
         with open(self._temp_fn, 'r') as f:
             base_config = f.read()
 
+        assert base_config
+
         if os.path.exists(self._out_fn):
             print(f'Warning! Old {self._out_fn} will be overwritten.')
 
         self.parse_data()
+
+        assert self.groups and self.admin_users
 
         with open(self._out_fn, 'w') as f:
 
@@ -139,6 +143,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
         if home:
             path = '/home/' + path
 
+        print(f'writing config file for [{course_id}] {path}')
+
         with open(f'{path}/nbgrader_config.py', 'w') as f:
             f.write(
                 NBGRADER_HOME_CONFIG_TEMPLATE_SHORT.format(
@@ -149,7 +155,9 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
     def write_grader_config(self, grader: str, course_id: str) -> None:
 
-        with open(f'/home/{grader}/{course_id}/.jupyter/nbgrader_config.py', 'w') as f:
+        print(f'Writing grader config for [{course_id}] {grader}')
+
+        with open(f'/home/{grader}/.jupyter/nbgrader_config.py', 'w') as f:
             f.write(
                 NBGRADER_HOME_CONFIG_TEMPLATE.format(
                     grader_name=grader,
@@ -159,6 +167,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
             )
 
     def create_user(self, username: str) -> None:
+
+        print(f'>>> Creating user {username}')
 
         os.system(f'adduser -q --gecos "" --disabled-password {username}')
         # os.system(f'chmod 664 /home/{username}')
@@ -173,8 +183,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
         jupyter = str(course_dir.parent / '.jupyter')
 
-        os.system(f'mkdir -p {jupyter}')
-        os.system(f'chown -R {jupyter}')
+        os.system(f'mkdir -p {jupyter} {course_dir}')
+        os.system(f'chown -R {grader}:{grader} {jupyter} {course_dir}')
 
         self.write_config(str(course_dir), course_id)
 
@@ -211,6 +221,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
             for user in course['instructors'] + course['graders'] + course['students']:
 
+                username: str = user['username']
+
                 if user['role'] != 'student':
 
                     self.groups[group_name].append(user['username'])
@@ -225,8 +237,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
                         lms_user_id=user['id'],
                     )
 
-                self.create_user(user)
+                self.create_user(username)
 
-                self.whitelist.add(user['username'])
+                self.whitelist.add(username)
 
-                self.write_config(user['username'], course_id, home=True)
+                self.write_config(username, course_id, home=True)
