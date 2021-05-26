@@ -193,6 +193,11 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
         os.system(f'chown -R {grader}:{grader} {jupyter} {course_dir / "source"} {course_dir}')
 
+        os.system(f"""su {grader} -c 'jupyter nbextension install --user --py nbgrader --overwrite \
+&& jupyter nbextension enable --user --py nbgrader \
+&& jupyter serverextension enable --user --py nbgrader'""")
+
+
     def get_db(self, grader: str, course_id: str) -> Gradebook:
         return Gradebook(f'sqlite:////home/{grader}/grader.db', course_id=course_id)
 
@@ -218,7 +223,7 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
             self.create_grader(grader, course_id)
 
-            self.groups[group_name] += [grader,  student_group]
+            self.groups.update({group_name: [grader, ], student_group: []})
 
             self.whitelist.add(grader)
 
