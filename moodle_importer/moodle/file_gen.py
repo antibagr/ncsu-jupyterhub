@@ -160,7 +160,7 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
         with open(f'/home/{grader}/.jupyter/nbgrader_config.py', 'w') as f:
             f.write(
                 NBGRADER_HOME_CONFIG_TEMPLATE.format(
-                    grader_name=grader,
+                    grader=grader,
                     course_id=course_id,
                     db_url='sqlite:///' + f'/home/{grader}/grader.db'
                 )
