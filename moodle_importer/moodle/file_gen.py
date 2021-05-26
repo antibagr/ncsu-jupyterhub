@@ -17,7 +17,6 @@ from moodle.templates import (JUPYTERHUB_USERS,
                               NBGRADER_COURSE_CONFIG_TEMPLATE,
                               NBGRADER_HOME_CONFIG_TEMPLATE,
                               NBGRADER_HOME_CONFIG_TEMPLATE_SHORT)
-
 from nbgrader.api import Assignment, Course, Gradebook, InvalidEntry
 
 from .processor import Processor
@@ -138,7 +137,7 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
     def write_config(self, path: str, course_id: str, home: bool = False) -> None:
 
         if home:
-            path = f'/home/' + path
+            path = '/home/' + path
 
         with open(f'{path}/nbgrader_config.py', 'w') as f:
             f.write(
