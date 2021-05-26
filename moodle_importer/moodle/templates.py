@@ -3,6 +3,7 @@ c = get_config()
 
 c.CourseDirectory.root = '/home/{grader}/{course_id}'
 c.CourseDirectory.db_url = '{db_url}'
+c.CourseDirectory.course_id = '{course_id}'
 """
 
 NBGRADER_HOME_CONFIG_TEMPLATE_SHORT = """

@@ -208,6 +208,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
             group_name = f'formgrade-{course_id}'
 
+            student_group: str = f'nbgrader-{course_id}'
+
             self.update_services(grader, course_id, self.courses.index(course))
 
             self.update_admins(course, grader)
@@ -216,7 +218,7 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
             self.create_grader(grader, course_id)
 
-            self.groups[group_name].append(grader)
+            self.groups[group_name] += [grader,  student_group]
 
             self.whitelist.add(grader)
 
@@ -228,12 +230,14 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
                 if user['role'] != 'student':
 
-                    self.groups[group_name].append(user['username'])
+                    self.groups[group_name].append(username)
 
                 if user['role'] not in ('teacher', 'editingteacher', 'instructor'):
 
+                    self.groups[student_group].append(username)
+
                     course_db.update_or_create_student(
-                        user['username'],
+                        username,
                         first_name=user['first_name'],
                         last_name=user['last_name'],
                         email=user['email'],
@@ -244,4 +248,4 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
                 self.whitelist.add(username)
 
-                self.write_config(username, course_id)
+                # self.write_config(username, course_id)
