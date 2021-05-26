@@ -138,20 +138,21 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
         self.admin_users.update(x['username'] for x in course['instructors'])
         self.admin_users.add(grader)
 
-    def write_config(self, path: str, course_id: str, home: bool = False) -> None:
+    def write_config(self, username: str, course_id: str) -> None:
 
-        if home:
-            path = '/home/' + path
+        print(f'writing config file for [{course_id}] {username}')
 
-        print(f'writing config file for [{course_id}] {path}')
+        os.system(f'mkdir -p /home/{username}/.jupyter')
 
-        with open(f'{path}/nbgrader_config.py', 'w') as f:
+        with open(f'/home/{username}/.jupyter/nbgrader_config.py', 'w') as f:
             f.write(
                 NBGRADER_HOME_CONFIG_TEMPLATE_SHORT.format(
                     db_url='sqlite:///'
                     + f'/home/grader-{course_id}/grader.db',
                 )
             )
+
+        os.system(f'chown -R {username} /home/{username}')
 
     def write_grader_config(self, grader: str, course_id: str) -> None:
 
@@ -176,9 +177,6 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
         print(f'>>> Creating user {username}')
 
         os.system(f'adduser -q --gecos "" --disabled-password {username}')
-        # os.system(f'chmod 664 /home/{username}')
-        # os.system(f'chown -R {username}:{username} /home/{username}')
-        ...
 
     def create_grader(self, grader: str, course_id: str) -> None:
 
@@ -189,9 +187,11 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
         jupyter = str(course_dir.parent / '.jupyter')
 
         os.system(f'mkdir -p {jupyter} {course_dir / "source"}')
-        os.system(f'chown -R {grader}:{grader} {jupyter} {course_dir / "source"}')
+        os.system(f'touch /home/{grader}/grader.db && chown {grader}:{grader} /home/{grader}/grader.db && chmod 644 /home/{grader}/grader.db')
 
         self.write_grader_config(grader, course_id)
+
+        os.system(f'chown -R {grader}:{grader} {jupyter} {course_dir / "source"} {course_dir}')
 
     def get_db(self, grader: str, course_id: str) -> Gradebook:
         return Gradebook(f'sqlite:////home/{grader}/grader.db', course_id=course_id)
@@ -244,4 +244,4 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
                 self.whitelist.add(username)
 
-                self.write_config(username, course_id, home=True)
+                self.write_config(username, course_id)

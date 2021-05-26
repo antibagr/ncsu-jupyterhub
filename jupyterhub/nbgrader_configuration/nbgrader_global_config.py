@@ -10,4 +10,4 @@ c.HubAuth.hub_port = 443
 
 c.Exchange.path_includes_course = True
 
-c.Authenticator.plugin_class = JupyterHubAuthPlugin
+# c.Authenticator.plugin_class = JupyterHubAuthPlugin
