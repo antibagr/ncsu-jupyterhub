@@ -166,6 +166,11 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
                 )
             )
 
+        with open(f'/home/{grader}/{course_id}/nbgrader_config.py', 'w') as f:
+            f.write(
+                NBGRADER_COURSE_CONFIG_TEMPLATE.format(course_id=course_id)
+            )
+
     def create_user(self, username: str) -> None:
 
         print(f'>>> Creating user {username}')
@@ -183,10 +188,8 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 
         jupyter = str(course_dir.parent / '.jupyter')
 
-        os.system(f'mkdir -p {jupyter} {course_dir}')
-        os.system(f'chown -R {grader}:{grader} {jupyter} {course_dir}')
-
-        self.write_config(str(course_dir), course_id)
+        os.system(f'mkdir -p {jupyter} {course_dir / "source"}')
+        os.system(f'chown -R {grader}:{grader} {jupyter} {course_dir / "source"}')
 
         self.write_grader_config(grader, course_id)
 
