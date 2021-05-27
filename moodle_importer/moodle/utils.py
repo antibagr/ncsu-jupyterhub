@@ -1,5 +1,8 @@
 import typing as t
 import json
+from functools import wraps
+
+from loguru import logger
 
 from moodle.typehints import JsonType, Course, User
 
@@ -14,30 +17,23 @@ def dump_json(dict_in: JsonType) -> str:
     return json.dumps(dict_in, indent=4, sort_keys=True, ensure_ascii=False)
 
 
-def format_course(course: dict) -> Course:
+def log_load_data(attr_name: str) -> t.Callable:
     '''
-    Format raw json response to convinient dictionary.
-    '''
-
-    return {
-            'id': course['id'],
-            'title': course['displayname'],
-            'short_name': course['shortname'],
-            'instructors': [],
-            'students': [],
-            'graders': [],
-    }
-
-def format_user(user: dict) -> User:
-    '''
-    Format raw json response to convinient dictionary.
+    Assume a func will store downloaded data to attr_name attribute,
+    and we're able to get it's length.
     '''
 
-    return {
-        'id': user['id'],
-        'first_name': user['firstname'],
-        'last_name': user['lastname'],
-        'username': user['username'],
-        'email': user['email'],
-        'roles': [role['shortname'] for role in user['roles']],
-    }
+    def _load_data(func: t.Callable) -> t.Callable:
+
+        @wraps(func)
+        def wrapper(self, *args: t.Any, **kw: t.Any) -> t.Any:
+
+            logger.info(f'Loading {attr_name} ...')
+
+            result = func(self, *args, **kw)
+
+            logger.info(f'Loaded {len(getattr(self, attr_name))} {attr_name}.')
+
+            return result
+        return wrapper
+    return _load_data

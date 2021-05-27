@@ -5,6 +5,6 @@ client = MoodleClient('https://rudie.moodlecloud.com', '0461b4a7e65e63921172fa37
 
 client.sync()
 
-# manager = MoodleIntegrationManager()
+manager = MoodleIntegrationManager()
 #
-# manager.update_jupyterhub()
+manager.update_jupyterhub()
