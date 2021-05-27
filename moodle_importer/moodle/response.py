@@ -2,11 +2,14 @@ import typing as t
 
 from requests.models import Response
 
-from .utils import dump_json
+from moodle.errors import MoodleHTTPException, MoodleAPIException
+from moodle.utils import dump_json
 
 
-class FluidResponse():
-    '''Documentation required
+class FluidResponse:
+    '''
+    Wrapper of a received HTTP response.
+    Mimic received jsonify data.
 
     Args:
         resp (Response): HTTP Response from API
@@ -14,12 +17,18 @@ class FluidResponse():
     Attributes:
         http_resp (type): Stored HTTP Response
         resp (JsonType): Json Data
-
     '''
 
     def __init__(self, resp: Response):
+
+        if resp.status_code != 200:
+            raise MoodleHTTPException(resp.status_code)
+
         self.http_resp = resp
         self.resp = self.http_resp.json()
+
+        if isinstance(self.resp, dict) and 'exception' in self.resp:
+            raise MoodleAPIException(self.resp)
 
     def __iter__(self) -> t.Generator[t.Any, None, None]:
         for el in self.resp:
@@ -33,10 +42,10 @@ class FluidResponse():
 
     def print(self) -> None:
         '''
-        Print shortcut for chaining style.
+        Print shortcut for chaining commands.
         '''
 
-        print(self)
+        print(str(self))
 
     @property
     def __class__(self) -> str:

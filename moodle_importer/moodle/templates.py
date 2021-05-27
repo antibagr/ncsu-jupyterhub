@@ -28,5 +28,4 @@ c.JupyterHub.load_groups = {groups}
 c.JupyterHub.services = {services}
 
 c.JupyterHub.api_tokens = {tokens}
-
 """

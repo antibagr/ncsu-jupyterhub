@@ -1,19 +1,16 @@
+import json
 import typing as t
 from pathlib import Path
-import json
 
-from moodle.typehints import PathLike, JsonType
+from moodle.typehints import JsonType, PathLike
 from moodle.utils import dump_json
+from moodle.settings import JSON_FILE
 
 
+class FileWorker(object):
 
-class Processor(object):
-
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent
-
-    FILE_NAME: str = 'courses.json'
-
-    _filename: PathLike = BASE_DIR / 'data' / FILE_NAME
+    def __init__(self, filename: t.Optional[PathLike] = None):
+        self._filename = filename or JSON_FILE
 
     @property
     def filename(self) -> PathLike:
@@ -27,6 +24,6 @@ class Processor(object):
         with open(self.filename, 'w') as f:
             f.write(dump_json(data))
 
-    def load_json(self, filename: t.Optional[PathLike] = None) -> JsonType:
-        with open(filename or self.filename, 'r') as f:
+    def load_json(self) -> JsonType:
+        with open(self.filename, 'r') as f:
             return json.loads(f.read())

@@ -2,7 +2,7 @@
 Documentation required.
 """
 
-from .moodle_client import Moodle
-from .file_gen import FileGenerator
+from .client.api import MoodleClient
+from .integration import MoodleIntegrationManager
 
-__all__ = ['Moodle', 'FileGenerator', ]
+__all__ = ['MoodleClient', 'MoodleIntegrationManager', ]

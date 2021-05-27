@@ -1,12 +1,22 @@
 import os
+import typing as t
 
 from pathlib import Path
 
-from .typehints import PathLike
 
-
+ROLES: t.Tuple[str] = (
+    'student',
+    'teaching_assistant',
+    'teacher',
+    'instructional_support',
+    'editingteacher',
+    'manager',
+    'coursecreator'
+)
 
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
+
+JSON_FILE: Path = BASE_DIR / 'data' / 'courses.json'
 
 EXCHANGE_DIR: Path = Path('/srv/nbgrader/exchange')
 

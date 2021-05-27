@@ -1,9 +1,18 @@
+from requests.exceptions import HTTPError
+
 from .utils import dump_json
 
 from moodle.typehints import JsonType
 
 
-class MoodleAPIException(Exception):
+class MoodleHTTPException(HTTPError):
+    '''
+    Non-success status code received after API Call.
+    '''
+    pass
+
+
+class MoodleAPIException(ValueError):
     '''
     Exception raises when Moodle API responses with a dictionary
     containing "exception" key.

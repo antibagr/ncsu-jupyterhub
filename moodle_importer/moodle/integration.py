@@ -12,21 +12,20 @@ import typing as t
 from pathlib import Path
 from secrets import token_hex
 
+from moodle.file_worker import FileWorker
 from moodle.settings import BASE_DIR, EXCHANGE_DIR, NB_GID, NB_UID
 from moodle.templates import (JUPYTERHUB_USERS,
                               NBGRADER_COURSE_CONFIG_TEMPLATE,
                               NBGRADER_HOME_CONFIG_TEMPLATE,
                               NBGRADER_HOME_CONFIG_TEMPLATE_SHORT)
+from moodle.typehints import JsonType
 from nbgrader.api import Assignment, Course, Gradebook, InvalidEntry
-
-from .processor import Processor
-from .typehints import JsonType
 
 # from sqlalchemy_utils import create_database
 # from sqlalchemy_utils import database_exists
 
 
-class FileGenerator(Processor):
+class MoodleIntegrationManager(FileWorker):
 
     def __init__(self) -> None:
 
@@ -48,7 +47,7 @@ class FileGenerator(Processor):
 
         super().__init__()
 
-    def generate(self):
+    def update_jupyterhub(self):
         '''
         Read 'data.json' and generate jupyterhub_config.py
         Replacing placeholders in template.py
@@ -197,7 +196,6 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
 && jupyter nbextension enable --user --py nbgrader \
 && jupyter serverextension enable --user --py nbgrader'""")
 
-
     def get_db(self, grader: str, course_id: str) -> Gradebook:
         return Gradebook(f'sqlite:////home/{grader}/grader.db', course_id=course_id)
 
@@ -252,5 +250,3 @@ nbgrader db student add {user["username"]} --last-name={user["last_name"]} --fir
                 self.create_user(username)
 
                 self.whitelist.add(username)
-
-                # self.write_config(username, course_id)
