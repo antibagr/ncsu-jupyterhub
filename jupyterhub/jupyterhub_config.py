@@ -12,7 +12,6 @@ from jupyterhub.spawner import LocalProcessSpawner
 # editing the file to turn off linter.
 if platform.system() == 'Windows':
     c = Mock()
-
 # ---------------
 # IP
 # ---------------
@@ -76,8 +75,7 @@ def pre_spawn_hook(spawner):
     username = spawner.user.name
 
     os.system(f'useradd -m {username}')
-    os.system(
-        f'export XDG_RUNTIME_DIR="" && chmod -R 777 /home/{username} && chown -R {username} /home/{username}')
+    os.system(f'export XDG_RUNTIME_DIR="" && chmod -R 777 /home/{username} && chown -R {username} /home/{username}')
 
     spawner.log.warning(
         json.dumps(spawner.userdata or {

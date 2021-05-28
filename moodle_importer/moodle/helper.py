@@ -17,7 +17,7 @@ class MoodleBasicHelper:
             str: valid string in lowercase.
 
         '''
-        return re.sub('\W', '_', string.lower())
+        return re.sub(r'\W', '_', string.lower())
 
     @staticmethod
     def get_user_group(user: User) -> str:

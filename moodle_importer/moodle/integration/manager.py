@@ -18,14 +18,17 @@ from moodle.utils import grader
 class IntegrationManager:
 
     helper: IntegrationHelper
+
     temp: Templater
 
     admin_users: t.Set
+
     whitelist: t.Set
 
     courses: JsonType
 
     groups: JsonType
+
     tokens: t.Dict[str, str]
 
     services: t.List[dict]

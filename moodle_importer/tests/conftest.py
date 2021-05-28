@@ -1,12 +1,13 @@
-import re
-import pytest
-import typing as t
 import random
+import re
 import string
+import typing as t
 
-from moodle import MoodleClient
-from moodle.typehints import Course, User, Role
+import pytest
+from moodle.client.api import MoodleClient
+from moodle.client.helper import MoodleDataHelper
 from moodle.settings import ROLES
+from moodle.typehints import Course, Role, User
 
 
 def valid_email(email: str) -> bool:
@@ -17,19 +18,26 @@ def valid_email(email: str) -> bool:
 
 
 def random_string(length: int = 10) -> str:
-     return ''.join(random.choice(string.ascii_lowercase) for _ in range(length))
+    return ''.join(random.choice(string.ascii_lowercase) for _ in range(length))
 
 
 def make_roles(*role_names: str) -> t.List[Role]:
     return [{'shortname': name} for name in role_names]
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture
 def client() -> MoodleClient:
     '''
     Instantiated client with dev server credentials.
     '''
+    print('called...')
+
     return MoodleClient('https://rudie.moodlecloud.com', '0461b4a7e65e63921172fa3727f0863c')
+
+
+@pytest.fixture
+def helper() -> MoodleDataHelper:
+    return MoodleDataHelper()
 
 
 @pytest.fixture
@@ -39,13 +47,13 @@ def user_fabric() -> t.Callable[[t.Union[str, int, t.List[Role]]], User]:
     '''
 
     def _user_fabric(*,
-        id: t.Optional[int] = None,
-        username: t.Optional[str] = None,
-        email: t.Optional[str] = None,
-        first_name: t.Optional[str] = None,
-        last_name: t.Optional[str] = None,
-        roles: t.Optional[t.List[Role]] = None,
-    ) -> User:
+                     id: t.Optional[int] = None,
+                     username: t.Optional[str] = None,
+                     email: t.Optional[str] = None,
+                     first_name: t.Optional[str] = None,
+                     last_name: t.Optional[str] = None,
+                     roles: t.Optional[t.List[Role]] = None,
+                     ) -> User:
         '''
         Create new user. Keyword-only arguments allowed.
         '''
@@ -57,12 +65,14 @@ def user_fabric() -> t.Callable[[t.Union[str, int, t.List[Role]]], User]:
             raise ValueError('Invalid email: %s' % email)
 
         if username and re.findall(r'\W+', username):
-            raise ValueError('Username contains invalid characters: %s' % username)
+            raise ValueError(
+                'Username contains invalid characters: %s' % username)
 
         if roles:
             for role in roles:
                 if role not in ROLES:
-                    raise ValueError('Role [%s] does not set in moodle.setitngs.ROLES tuple.' % role)
+                    raise ValueError(
+                        'Role [%s] does not set in moodle.setitngs.ROLES tuple.' % role)
 
         return {
             'id': id or random.randint(0, 100),
@@ -82,13 +92,13 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Union[str, int, t.Li
     '''
 
     def _course_fabric(*,
-        id: t.Optional[int] = None,
-        title: t.Optional[str] = None,
-        short_name: t.Optional[str] = None,
-        instructors: t.Optional[t.List[User]] = None,
-        students: t.Optional[t.List[User]] = None,
-        graders: t.Optional[t.List[User]] = None,
-    ) -> Course:
+                       id: t.Optional[int] = None,
+                       title: t.Optional[str] = None,
+                       short_name: t.Optional[str] = None,
+                       instructors: t.Optional[t.List[User]] = None,
+                       students: t.Optional[t.List[User]] = None,
+                       graders: t.Optional[t.List[User]] = None,
+                       ) -> Course:
         '''
         Create new course. Keyword-only arguments allowed.
         '''
@@ -97,16 +107,18 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Union[str, int, t.Li
             raise TypeError('User id must be int.')
 
         if short_name and re.findall(r'\W+', short_name):
-            raise ValueError('Short name contains invalid characters: %s' % short_name)
+            raise ValueError(
+                'Short name contains invalid characters: %s' % short_name)
 
         # Python does strange things
         # with lists in default values ...
         instructors = instructors or []
-        students = students  or []
+        students = students or []
         graders = graders or []
 
         for user in instructors + students + graders:
-            assert tuple(user.keys()) == ('id', 'username', 'email', 'first_name', 'last_name', 'roles')
+            assert tuple(user.keys()) == ('id', 'username',
+                                          'email', 'first_name', 'last_name', 'roles')
 
         return {
             'id': id or random.randint(1, 100),

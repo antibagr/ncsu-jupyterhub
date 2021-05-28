@@ -1,23 +1,22 @@
 import os
 import typing as t
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
-
-from moodle import MoodleClient
-
+from moodle.client.api import MoodleClient
+from moodle.client.helper import MoodleDataHelper
 from moodle.settings import ROLES
-from moodle.typehints import User, Course
+from moodle.typehints import Course, User
 
 
-def test_client_attributes(client: MoodleClient):
+def test_helper(helper: MoodleDataHelper):
 
-    assert hasattr(client, '_roles')
-    assert hasattr(client, '_roles_reversed')
-    assert tuple(client._roles.keys()) == ROLES
+    assert hasattr(helper, '_roles')
+    assert hasattr(helper, '_roles_reversed')
+    assert tuple(helper._roles.keys()) == ROLES
 
     with pytest.raises(AttributeError):
-        client._load_roles()
+        helper._load_roles()
 
 
 @pytest.mark.parametrize(
@@ -28,12 +27,14 @@ def test_client_attributes(client: MoodleClient):
         (['editingteacher', 'teacher'], 'editingteacher'),
         (['student', 'teaching_assistant', 'editingteacher'], 'editingteacher'),
         pytest.param([], '', marks=pytest.mark.xfail),
-        pytest.param(['student', 'superman'], 'student', marks=pytest.mark.xfail),
+        pytest.param(['student', 'superman'], 'student',
+                     marks=pytest.mark.xfail),
     ],
 )
-def test_client_priority(client: MoodleClient, roles: t.List[str], expected: str):
+def test_priority(helper: MoodleDataHelper, roles: t.List[str], expected: str):
 
-    assert client.get_user_highest_role(roles) == expected
+    assert helper.get_user_highest_role(roles) == expected
+
 
 @pytest.mark.parametrize(
     'test_user, expected',
@@ -48,8 +49,8 @@ def test_client_priority(client: MoodleClient, roles: t.List[str], expected: str
         pytest.param({}, '', marks=pytest.mark.xfail),
     ],
 )
-def test_user_group(client: MoodleClient, test_user: dict, expected: str):
-    assert client.get_user_group(test_user) == expected
+def test_user_group(helper: MoodleDataHelper, test_user: dict, expected: str):
+    assert helper.get_user_group(test_user) == expected
 
 
 def test_load_courses(client: MoodleClient):
@@ -58,7 +59,7 @@ def test_load_courses(client: MoodleClient):
 
         mocked_call.return_value = range(5)
 
-        with patch('moodle.client.api.format_course') as mocked_format_course:
+        with patch.object(client.helper, 'format_course', autospec=True) as mocked_format_course:
 
             client.load_courses()
 
@@ -66,22 +67,50 @@ def test_load_courses(client: MoodleClient):
 
             assert mocked_format_course.call_count == 5
 
-            assert mocked_format_course.call_args_list == list(map(call, range(5)))
+            assert mocked_format_course.call_args_list == list(
+                map(call, range(5)))
 
 
-def test_load_users(client: MoodleClient, student: User, teacher: User):
+def test_load_users(client: MoodleClient, student: User, teacher: User, course: Course):
+    '''
+    Test transforming data process.
+    '''
 
-    print(client.courses)
+    # reset groups
+    course['graders'] = []
+    course['instructors'] = []
+    course['students'] = []
 
-    with patch.object(client, 'get_courses', autospec=True) as mocked_get_courses:
+    client.courses = [course, ]
 
-        with patch.object(client, 'get_users', autospec=True) as mocked_get_users:
+    # we have teacher and two repeated students.
+    with patch.object(client, 'get_users', return_value=[student, student, teacher]) as mocked_get_users:
 
-            mocked_get_users.return_value = [student, teacher]
+        with patch.object(client.helper, 'format_user', new=lambda user: user.copy()):
 
-            with patch('moodle.client.api.format_user', new=lambda user: user.copy()):
+            client.load_users()
 
-                client.load_users()
+            # do the same work client does with users
+            # to compare data
+            student['role'] = student.pop('roles')[0]
+            teacher['role'] = teacher.pop('roles')[0]
 
-                print(client.courses)
-                print(client.users)
+            mocked_get_users.assert_called_once_with(course['id'])
+
+            assert client.courses == [
+                {**course, 'graders': [teacher],
+                    'students': [student, student]}
+            ]
+
+            assert client.users == {
+                teacher['username']: teacher, student['username']: student}
+
+
+@pytest.mark.smoke
+def test_call_real_api(client: MoodleClient):
+
+    with patch('moodle.client.api.FileWorker.save_json') as mocked_json:
+
+        client.sync()
+
+        mocked_json.assert_called_once_with(client.courses)

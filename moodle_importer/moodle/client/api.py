@@ -15,13 +15,15 @@ class MoodleClient(BaseAPIClient):
 
     helper: MoodleDataHelper
 
-    courses: t.List[Course] = []
+    courses: t.List[Course]
 
-    users: t.Dict[str, User] = {}
+    users: t.Dict[str, User]
 
     def __init__(self, url: str, key: str, endpoint: t.Optional[str] = None) -> None:
 
         self.helper = MoodleDataHelper()
+        self.courses = []
+        self.users = {}
 
         super().__init__(url, key, endpoint)
 

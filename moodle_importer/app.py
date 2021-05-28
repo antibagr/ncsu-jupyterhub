@@ -2,9 +2,9 @@ import os
 from unittest import mock
 from moodle import MoodleClient, IntegrationManager
 
-# client = MoodleClient('https://rudie.moodlecloud.com', '0461b4a7e65e63921172fa3727f0863c')
-#
-# client.sync()
+client = MoodleClient('https://rudie.moodlecloud.com', '0461b4a7e65e63921172fa3727f0863c')
+
+client.sync()
 
 manager = IntegrationManager()
 
