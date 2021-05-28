@@ -1,10 +1,11 @@
 import typing as t
 
+from moodle.helper import MoodleBasicHelper
 from moodle.settings import ROLES
 from moodle.typehints import JsonType, Course, User
 
 
-class MoodleDataHelper:
+class MoodleDataHelper(MoodleBasicHelper):
     '''
     Helper for transforming data received from Moodle
     '''
@@ -14,11 +15,9 @@ class MoodleDataHelper:
         Cache dictionaries with roles.
         '''
 
-        if hasattr(self, '_roles'):
-            raise AttributeError('Roles already created.')
-
         self._roles = dict(list(zip(ROLES, range(len(ROLES)))))
         self._roles_reversed = {v: k for k, v in self._roles.items()}
+        self._dbs = {}
 
     def priority(
                 self,
@@ -54,44 +53,3 @@ class MoodleDataHelper:
 
         # user's highest role name
         return self.priority(highest_rate, reversed=True)
-
-    def get_user_group(self, user: User) -> str:
-
-        if user['role'] == 'student':
-            group = 'students'
-        elif user['role'] in ('editingteacher', 'manager', 'coursecreator', 'instructional_support'):
-            group = 'instructors'
-        elif user['role'] in ('teaching_assistant', 'teacher'):
-            group = 'graders'
-        else:
-            raise KeyError(user['role'])
-
-        return group
-
-    def format_course(self, course: JsonType) -> Course:
-        '''
-        Format raw json response to convinient dictionary.
-        '''
-
-        return {
-                'id': course['id'],
-                'title': course['displayname'],
-                'short_name': course['shortname'],
-                'instructors': [],
-                'students': [],
-                'graders': [],
-        }
-
-    def format_user(self, user: JsonType) -> User:
-        '''
-        Format raw json response to convinient dictionary.
-        '''
-
-        return {
-            'id': user['id'],
-            'first_name': user['firstname'],
-            'last_name': user['lastname'],
-            'username': user['username'],
-            'email': user['email'],
-            'roles': [role['shortname'] for role in user['roles']],
-        }

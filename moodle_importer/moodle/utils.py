@@ -37,3 +37,13 @@ def log_load_data(attr_name: str) -> t.Callable:
             return result
         return wrapper
     return _load_data
+
+
+class Grader(int):
+
+    @staticmethod
+    def __truediv__(course_id: str) -> str:
+        assert isinstance(course_id, str), 'provide course id to generate grader name.'
+        return f'grader-{course_id}'
+
+grader = Grader()
