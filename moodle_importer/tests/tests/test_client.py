@@ -92,8 +92,8 @@ def test_load_users(client: MoodleClient, student: User, teacher: User, course: 
 
             # do the same work client does with users
             # to compare data
-            student['role'] = student.pop('roles')[0]
-            teacher['role'] = teacher.pop('roles')[0]
+            student.role = student.pop('roles')[0]
+            teacher.role = teacher.pop('roles')[0]
 
             mocked_get_users.assert_called_once_with(course['id'])
 
@@ -103,7 +103,7 @@ def test_load_users(client: MoodleClient, student: User, teacher: User, course: 
             ]
 
             assert client.users == {
-                teacher['username']: teacher, student['username']: student}
+                teacher.username: teacher, student.username: student}
 
 
 @pytest.mark.smoke

@@ -8,6 +8,7 @@ from moodle.client.api import MoodleClient
 from moodle.client.helper import MoodleDataHelper
 from moodle.settings import ROLES
 from moodle.typehints import Course, Role, User
+from moodle.utils import JsonDict
 
 
 def valid_email(email: str) -> bool:
@@ -74,14 +75,14 @@ def user_fabric() -> t.Callable[[t.Union[str, int, t.List[Role]]], User]:
                     raise ValueError(
                         'Role [%s] does not set in moodle.setitngs.ROLES tuple.' % role)
 
-        return {
+        return JsonDict({
             'id': id or random.randint(0, 100),
             'username': username or random_string(10),
             'email': email or f'{random_string(10)}@mail.com',
             'first_name': first_name or random_string(10),
             'last_name': last_name or random_string(10),
             'roles': roles or [random.choice(ROLES) for _ in range(random.randint(0, 5))],
-        }
+        })
     return _user_fabric
 
 
@@ -120,14 +121,14 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Union[str, int, t.Li
             assert tuple(user.keys()) == ('id', 'username',
                                           'email', 'first_name', 'last_name', 'roles')
 
-        return {
+        return JsonDict({
             'id': id or random.randint(1, 100),
             'title': title or random_string(20),
             'short_name': short_name or random_string(20),
             'instructors': [] or [user_fabric() or _ in range(random.randint(0, 5))],
             'students': [] or [user_fabric() or _ in range(random.randint(0, 5))],
             'graders': [] or [user_fabric() or _ in range(random.randint(0, 5))],
-        }
+        })
     return _course_fabric
 
 

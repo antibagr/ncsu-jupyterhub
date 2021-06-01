@@ -1,18 +1,36 @@
 from loguru import logger
 
-from moodle.utils import grader
-from moodle.templates import (NBGRADER_COURSE_CONFIG_TEMPLATE,
-                              NBGRADER_HOME_CONFIG_TEMPLATE,
-                              NBGRADER_HOME_CONFIG_TEMPLATE_SHORT)
+from moodle.utils import grader, JsonDict
+from moodle.templates import Config
 
 
 class Templater:
+    '''
+    Class for working with configuration files and filling templates.
+
+    Public methods:
+
+        create_service
+        write_nbgrader_config
+    '''
 
     @staticmethod
-    def create_service(course_id: str, api_token: str, port: int = 0) -> dict:
-        return {
+    def create_service(course_id: str, api_token: str, port: int = 0) -> JsonDict:
+        '''
+        Fills service template with provided data.
+
+        Args:
+            course_id (str): Normalized course's name.
+            api_token (str): Jupyterhub Service API token.
+            port (int): Port to run service on. Defaults to 0.
+
+        Returns:
+            JsonDict: Dict that you can add to services in jupyterhub_config.py
+        '''
+
+        return JsonDict({
             'name': course_id,
-            "admin": True,
+            'admin': True,
             'url': f'http://127.0.0.1:{9000 + port}',
             'command': [
                 'jupyterhub-singleuser',
@@ -24,18 +42,37 @@ class Templater:
             'cwd': f'/home/grader-{course_id}',
             'api_token': api_token,
             'environment': {'JUPYTERHUB_SERVICE_USER': f'grader-{course_id}'}
-        }
+        })
 
     @staticmethod
     def write_grader_config(course_id: str) -> None:
+        '''
+        In order to set up course, we need to create two configuration files.
+
+        1. /home/grader-course_id/.jupyter/nbgrader_config.py
+
+            Default 'home' configuration in hidden folder.
+            Points to course's root directory, course id and database URI.
+
+        2. /home/grader-course_id/course_id/nbgrader_config.py
+
+            Config inside the course root sets up course_id one more time.
+
+        Args:
+            course_id (str): Normalized name of the course
+
+        Returns:
+            None
+
+        '''
 
         course_grader: str = grader / course_id
 
         logger.debug(f'Writing grader config for {course_grader}')
 
-        with open(f'/home/{grader / course_id}/.jupyter/nbgrader_config.py', 'w') as f:
+        with open(f'/home/{course_grader}/.jupyter/nbgrader_config.py', 'w') as f:
             f.write(
-                NBGRADER_HOME_CONFIG_TEMPLATE.format(
+                Config.home_config.format(
                     grader=grader / course_id,
                     course_id=course_id,
                     db_url='sqlite:///' + f'/home/{course_grader}/grader.db'
@@ -44,5 +81,5 @@ class Templater:
 
         with open(f'/home/{course_grader}/{course_id}/nbgrader_config.py', 'w') as f:
             f.write(
-                NBGRADER_COURSE_CONFIG_TEMPLATE.format(course_id=course_id)
+                Config.course_config.format(course_id=course_id)
             )

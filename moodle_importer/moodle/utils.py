@@ -1,10 +1,9 @@
-import typing as t
 import json
+import typing as t
 from functools import wraps
 
 from loguru import logger
-
-from moodle.typehints import JsonType, Course, User
+from moodle.typehints import Course, JsonType, User
 
 ''' Function utils '''
 
@@ -40,10 +39,54 @@ def log_load_data(attr_name: str) -> t.Callable:
 
 
 class Grader(int):
+    '''
+    Overload division method.
+    To create a grader name simply use division:
+
+    grader / 'test_course'
+    >>> 'grader-test_course'
+    '''
 
     @staticmethod
     def __truediv__(course_id: str) -> str:
-        assert isinstance(course_id, str), 'provide course id to generate grader name.'
+        assert isinstance(
+            course_id, str), 'provide course id to generate grader name.'
         return f'grader-{course_id}'
 
+
 grader = Grader()
+
+
+class JsonDict(dict):
+    '''
+    Javascript-style json
+    You can access values in dict as dict's attributes.
+
+    new_json = JsonDict(key='value')
+    new_json.key
+    >>> 'value'
+
+    new_json.key = 'something new'
+    new_json
+    >>> {'key': 'something new'}
+
+    del new_json.key
+    new_json
+    >>> {}
+    '''
+
+    def __getattr__(self, key: t.Hashable) -> t.Any:
+        try:
+            return self[key]
+        except KeyError as err:
+            raise AttributeError(key) from err
+
+    def __setattr__(self, key: t.Hashable, value: t.Any) -> None:
+        self[key] = value
+
+    def __delattr__(self, key: t.Hashable) -> None:
+
+        if key in self:
+            del self[key]
+        else:
+            super().__delattr__(str(key))

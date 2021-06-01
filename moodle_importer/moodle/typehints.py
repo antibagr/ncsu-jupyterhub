@@ -19,7 +19,7 @@ Json = t.MutableMapping[str, JsonContent]
 
 JsonType = t.Union[Json, t.Sequence[Json]]
 
-PathLike = t.TypeVar("PathLike", str, pathlib.Path, os.PathLike)
+PathLike = t.Union[str, pathlib.Path, os.PathLike]
 
 Role = t.Literal['foo']
 

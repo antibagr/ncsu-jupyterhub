@@ -75,19 +75,22 @@ def pre_spawn_hook(spawner):
 
     username = spawner.user.name
 
-    os.system(f'useradd -m {username}')
-    os.system(
-        f'export XDG_RUNTIME_DIR="" && chmod -R 777 /home/{username} && chown -R {username} /home/{username}')
+    # os.system(f'useradd -m {username}')
+    # os.system(
+    #     f'export XDG_RUNTIME_DIR="" && chmod -R 777 /home/{username} && chown -R {username} /home/{username}')
 
-    spawner.log.warning(
-        json.dumps(spawner.userdata or {
-                   'Data': 'Not Found'}, indent=4, sort_keys=True, ensure_ascii=False)
-    )
+    spawner.log.warning(f'Spawn {username}')
+
+    # spawner.log.warning(
+    #     json.dumps(spawner.userdata or {
+    #                'Data': 'Not Found'}, indent=4, sort_keys=True, ensure_ascii=False)
+    # )
 
 
 def bind_auth_state(spawner, auth_state: dict) -> None:
 
     spawner.log.info('Bind auth state to a spawner.')
+
     spawner.userdata = auth_state
 
 

@@ -1,6 +1,7 @@
 import re
 
 from moodle.typehints import JsonType, Course, User
+from moodle.utils import JsonDict
 
 
 class MoodleBasicHelper:
@@ -39,14 +40,14 @@ class MoodleBasicHelper:
         Format raw json response to convinient dictionary.
         '''
 
-        return {
+        return JsonDict({
                 'id': course['id'],
                 'title': course['displayname'],
                 'short_name': course['shortname'],
                 'instructors': [],
                 'students': [],
                 'graders': [],
-        }
+        })
 
     @staticmethod
     def format_user(user: JsonType) -> User:
@@ -54,11 +55,11 @@ class MoodleBasicHelper:
         Format raw json response to convinient dictionary.
         '''
 
-        return {
+        return JsonDict({
             'id': user['id'],
             'first_name': user['firstname'],
             'last_name': user['lastname'],
             'username': user['username'],
             'email': user['email'],
             'roles': [role['shortname'] for role in user['roles']],
-        }
+        })

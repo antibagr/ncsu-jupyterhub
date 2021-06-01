@@ -12,6 +12,14 @@ from moodle.utils import log_load_data
 
 
 class MoodleClient(BaseAPIClient):
+    '''
+    Client for fetch the data from the Moodle LMS.
+
+    Args:
+        url (str): Moodle server URL
+        key (str): Secret API key
+        endpoint (t.Optional[str]): Custom endpoint. Defaults to None.
+    '''
 
     helper: MoodleDataHelper
 
@@ -56,7 +64,7 @@ class MoodleClient(BaseAPIClient):
             course_users = self.get_users(course['id'])
 
             logger.debug(
-                f'course "{course["title"]}" has {len(course_users)} enrolled.')
+                f'course "{course["title"]}" has {len(course_users)} enrolled participants.')
 
             for course_user in course_users:
 
