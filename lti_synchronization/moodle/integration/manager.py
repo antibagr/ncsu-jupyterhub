@@ -7,7 +7,7 @@ from secrets import token_hex
 
 from loguru import logger
 from moodle.file_worker import FileWorker
-from moodle.integration.helper import IntegrationHelper
+from moodle.helper import NBGraderHelper
 from moodle.integration.system import SystemCommand
 from moodle.integration.template import Templater
 from moodle.settings import BASE_DIR
@@ -40,7 +40,7 @@ class IntegrationManager:
         # production jupyterhub configuration
         out_file: Path = Path('/srv/jupyterhub/jupyterhub_config.py')
 
-    helper: IntegrationHelper
+    helper: NBGraderHelper
 
     temp: Templater
 
@@ -58,7 +58,7 @@ class IntegrationManager:
 
     def __init__(self):
 
-        self.helper = IntegrationHelper()
+        self.helper = NBGraderHelper()
 
         self.temp = Templater()
 

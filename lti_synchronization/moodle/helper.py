@@ -1,13 +1,12 @@
 import re
+import typing as t
 
 from loguru import logger
-
+from moodle.typehints import Course, JsonType, User
+from moodle.utils import JsonDict, grader
+from nbgrader.api import Assignment, Gradebook, InvalidEntry
+from nbgrader.api import Course as NBCourse
 from traitlets.config import LoggingConfigurable
-
-from moodle.typehints import JsonType, Course, User
-from moodle.utils import JsonDict
-
-
 
 
 class MoodleBasicHelper(LoggingConfigurable):
@@ -111,3 +110,124 @@ class MoodleBasicHelper(LoggingConfigurable):
             'email': user['email'],
             'roles': [role['shortname'] for role in user['roles']],
         })
+
+
+class NBGraderHelper(MoodleBasicHelper):
+    '''
+    Class for storing database connections
+    during adding new students into courses.
+    '''
+
+    _dbs: t.Dict[str, Gradebook]
+
+    def __init__(self):
+        self._dbs = {}
+        super().__init__()
+
+    @staticmethod
+    def _get_db(course_id: str) -> Gradebook:
+        '''
+        Create new connection to sqlite database.
+        '''
+
+        return Gradebook(
+            f'sqlite:////home/{grader / course_id}/grader.db',
+            course_id=course_id
+        )
+
+    def get_db(self, course_id: str) -> Gradebook:
+        '''
+        Get connection to the course database,
+        which will also stored in helper instance.
+
+        Args:
+            course_id (str): Normalized course name
+
+        Returns:
+            Gradebook: Opened database connection
+
+        '''
+
+        if course_id not in self._dbs:
+            self._dbs[course_id] = self._get_db(course_id)
+
+        return self._dbs[course_id]
+
+    def add_student(self, course_id: str, student: User) -> None:
+        '''
+        Create or update student in the nbgrader sqlite database.
+
+        Args:
+            course_id (str): Course short name.
+            student (User): Student to be added.
+        '''
+
+        with self.get_db(course_id) as gb:
+
+            gb.update_or_create_student(
+                student['username'],
+                lms_user_id=student['id'],
+                first_name=student['first_name'],
+                last_name=student['last_name'],
+                email=student['email'],
+            )
+
+    def update_course(self, course_id: str, **kwargs: t.Any) -> None:
+        '''
+        Updates the course in nbgrader database
+        '''
+
+        with self.get_db(course_id) as gb:
+            gb.update_course(course_id, **kwargs)
+
+    def get_course(self, course_id: str) -> NBCourse:
+        '''
+        Gets the course model instance
+        '''
+
+        with self.get_db(course_id) as gb:
+
+            course = gb.check_course(course_id)
+
+            logger.debug(f'course got from db: {course!r}')
+
+            return course
+
+    def register_assignment(
+                self,
+                course_id: str,
+                assignment_name: str,
+                **kwargs: t.Any
+            ) -> t.Optional[Assignment]:
+        '''
+        Adds an assignment to nbgrader database
+
+        Args:
+            assignment_name: The assingment's name
+        Raises:
+            InvalidEntry: when there was an error adding the assignment to the database
+        '''
+
+        if not assignment_name:
+            raise ValueError('assignment_name missing')
+
+        logger.debug(
+            'Assignment name normalized %s to save in gradebook' % assignment_name)
+
+        assignment: t.Optional[Assignment] = None
+
+        with self.get_db(course_id) as gb:
+
+            try:
+                assignment = gb.update_or_create_assignment(
+                    assignment_name, **kwargs)
+
+                logger.debug('Added assignment %s to gradebook' %
+                             assignment_name)
+
+            except InvalidEntry as e:
+
+                logger.debug(
+                    'Error ocurred by adding assignment to gradebook: %s' % e)
+
+        return assignment

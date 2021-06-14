@@ -2,7 +2,7 @@ import typing as t
 import pytest
 from unittest import mock
 
-from moodle.integration.helper import IntegrationHelper
+from moodle.helper import NBGraderHelper
 from moodle.integration.system import SystemCommand
 from moodle.integration.template import Templater
 from moodle.typehints import User
@@ -15,19 +15,24 @@ def system():
 
 def test_helper(student: User):
 
-    helper = IntegrationHelper()
+    helper = NBGraderHelper()
 
-    with mock.patch('moodle.integration.helper.Gradebook') as mocked_gradebook:
+    with mock.patch('moodle.helper.Gradebook') as mocked_gradebook:
 
-        mocked_gradebook.update_or_create_student = mock.Mock()
+        gb = mock.Mock()
+
+        mocked_gradebook.return_value.__enter__.return_value = gb
 
         helper.add_student('course_id', student)
 
         assert 'course_id' in helper._dbs
 
-        mocked_gradebook.assert_called_once_with('sqlite:////home/grader-course_id/grader.db', course_id='course_id')
+        mocked_gradebook.assert_called_once_with(
+            'sqlite:////home/grader-course_id/grader.db',
+            course_id='course_id'
+        )
 
-        mocked_gradebook().update_or_create_student.assert_called_once_with(
+        gb.update_or_create_student.assert_called_once_with(
             student['username'],
             lms_user_id=student['id'],
             first_name=student['first_name'],
@@ -35,10 +40,11 @@ def test_helper(student: User):
             email=student['email'],
         )
 
+
 @pytest.mark.parametrize('dirs, line', [
     (['one'], 'mkdir -p one'),
     (['one', 'two'], 'mkdir -p one two'),
-    ([['one', 'two']], 'mkdir -p one two'),
+    ([['one', 'two', 'three']], 'mkdir -p one two three'),
     (('one', 'two'), 'mkdir -p one two'),
     ((('one', 'two')), 'mkdir -p one two'),
     pytest.param([], '', marks=pytest.mark.xfail),

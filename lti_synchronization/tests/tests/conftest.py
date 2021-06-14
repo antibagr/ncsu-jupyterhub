@@ -76,7 +76,7 @@ def make_http_response() -> HTTPResponse:
         reason: str = 'OK',
         headers: t.Optional[HTTPHeaders] = None,
         effective_url: str = 'http://hub.example.com/',
-        body: t.Optional[JsonType] = None,
+        body: JsonType = {'foo': 'bar'},
     ) -> HTTPResponse:
         '''
         Creates an HTTPResponse object from a given request. The buffer key is used to
@@ -85,23 +85,26 @@ def make_http_response() -> HTTPResponse:
         This awaitable factory method requires a tornado.web.RequestHandler object with a valid
         request property, which in turn requires a valid jupyterhub.auth.Authenticator object. Use
         a dictionary to represent the StringIO body in the response.
+
         Example:
             response_args = {'handler': local_handler.request, 'body': {'code': 200}}
             http_response = await factory_http_response(**response_args)
+
         Args:
-        handler: tornado.web.RequestHandler object.
-        code: response code, e.g. 200 or 404
-        reason: reason phrase describing the status code
-        headers: HTTPHeaders (response header object), use the dict within the constructor, e.g.
-            {'content-type': 'application/json'}
-        effective_url: final location of the resource after following any redirects
-        body: dictionary that represents the StringIO (buffer) body
+
+            handler: tornado.web.RequestHandler object.
+            code: response code, e.g. 200 or 404
+            reason: reason phrase describing the status code
+            headers: HTTPHeaders (response header object), use the dict within the constructor, e.g.
+                {'content-type': 'application/json'}
+            effective_url: final location of the resource after following any redirects
+            body: dictionary that represents the StringIO (buffer) body
+
         Returns:
-        A tornado.client.HTTPResponse object
+            A tornado.client.HTTPResponse object
         '''
 
-        dict_to_buffer = StringIO(json.dumps(
-            body or {'foo': 'bar'})) if body is not None else None
+        dict_to_buffer = StringIO(json.dumps(body)) if body is not None else None
 
         return HTTPResponse(
             request=handler,
@@ -153,8 +156,10 @@ def mock_tornado_client(
     request, make_http_response, make_mock_request_handler
 ) -> t.Generator[AsyncHTTPClient, None, None]:
     '''
-    Creates a patch of AsyncHttpClient.fetch method, useful when other tests are making http request
+    Creates a patch of AsyncHttpClient.fetch method,
+    useful when other tests are making http request
     '''
+
     local_handler = make_mock_request_handler(RequestHandler)
 
     test_request_body_param = (
@@ -341,3 +346,23 @@ def make_auth_state_dict() -> JsonType:
         }
 
     return _make_auth_state_dict
+
+
+@pytest.fixture
+def mock_nbgrader_helper() -> t.Generator[Mock, None, None]:
+
+    with patch('moodle.helper.Gradebook'):
+        with patch.multiple(
+            'moodle.helper.NBGraderHelper',
+            # __init__=lambda x, y: None,
+            update_course=Mock(return_value=None),
+            # add_user_to_nbgrader_gradebook=Mock(return_value=None),
+            # register_assignment=Mock(return_value=None),
+            get_course=Mock(
+                return_value=Mock(
+                    id='123',
+                    lms_lineitems_endpoint='example.moodle.com/api/lti/courses/1/line_items',
+                )
+            ),
+        ) as mock_nb:
+            yield mock_nb

@@ -1,6 +1,6 @@
 import json
 
-from moodle.grades import exceptions
+from moodle.grades import errors
 from moodle.grades.senders import LTI13GradeSender
 from tornado import web
 
@@ -9,7 +9,8 @@ from jupyterhub.handlers import BaseHandler
 
 class SendGradesHandler(BaseHandler):
     '''
-    Defines a POST method to process grades submission for a specific assignment within a course
+    Defines a POST method to process grades submission
+    for a specific assignment within a course
     '''
 
     async def post(self, course_id: str, assignment_name: str) -> None:
@@ -38,16 +39,22 @@ class SendGradesHandler(BaseHandler):
 
         try:
             await lti_grade_sender.send_grades()
-        except exceptions.GradesSenderCriticalError:
+
+        except errors.GradesSenderCriticalError as exc:
             raise web.HTTPError(
-                400, 'There was an critical error, please check logs.')
-        except exceptions.AssignmentWithoutGradesError:
-            raise web.HTTPError(400, 'There are no grades yet to submit')
-        except exceptions.GradesSenderMissingInfoError as e:
-            self.log.error(f'There are missing values.{e}')
+                400, 'There was an critical error, please check logs.') from exc
+
+        except errors.AssignmentWithoutGradesError as exc:
+            raise web.HTTPError(
+                400, 'There are no grades yet to submit') from exc
+
+        except errors.GradesSenderMissingInfoError as exc:
+
+            self.log.error(f'There are missing values.{exc}')
+
             raise web.HTTPError(
                 400,
-                f'Impossible to send grades. There are missing values, please check logs.{e}',
-            )
+                f'Impossible to send grades. There are missing values, please check logs.',
+            ) from exc
 
         self.write(json.dumps({'success': True}))
