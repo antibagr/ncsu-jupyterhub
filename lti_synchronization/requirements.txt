@@ -1,0 +1,13 @@
+josepy
+jupyterhub
+jwcrypto
+loguru
+nbgrader
+oauthenticator
+oauthlib
+pem
+pycryptodome
+pyjwt==1.7.1
+pytest-asyncio
+pytest-clarity
+requests
