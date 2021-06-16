@@ -4,20 +4,25 @@ services:
   jupyterhub:
     container_name: jhub
     image: jupyterhub-nbgrader
-    build: .
+    build: ./jupyterhub
     ports:
       - 443:443
-      - 8000:8000
     env_file:
       - ./.env
+
     volumes:
-      - ./backup:/backup
-      - ./backup.sh:/srv/jupyterhub/backup.sh
-      #  jhub-dev_cos_ncsu_edu_cert.cer  jhub-dev.cos.ncsu.edu.csr  jhub-dev.cos.ncsu.edu.key
+      # Mount python library
+      - ./lti_synchronization:/srv/jupyterhub/lti_synchronization
+
+      # Mount folders to copy backups to
+      - ./misc/backup:/backup
+      - ./shell/backup.sh:/srv/jupyterhub/backup.sh
+
+      # Mount SSL certificate
       - /root/certificates/jhub-dev_cos_ncsu_edu_cert.cer:/srv/jupyterhub/ssc_jhub.crt:ro
       - /root/certificates/jhub-dev.cos.ncsu.edu.key:/srv/jupyterhub/ssc_jhub.key:ro
-      - ./jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py
-    command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log
 
-volumes:
-  backup:
+      # Mount global nbgrader configuration
+      - ./jupyterhub/nbgrader_configuration/nbgrader_global_config.py:/etc/jupyter/nbgrader_config.py
+
+    command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log

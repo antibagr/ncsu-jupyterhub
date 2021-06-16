@@ -1,0 +1,23 @@
+# lti_synchronization dependencies
+
+custom-inherit==2.3.1
+josepy==1.8.0
+jupyter==1.0.0
+jupyterhub==1.4.1
+jwcrypto==0.9.1
+loguru==0.5.3
+nbgrader @ git+https://github.com/IllumiDesk/nbgrader@c893fbbfd2f5a0911a2142735af90dadb966dfd2
+notebook==6.4.0
+oauthenticator==14.0.0
+oauthlib==3.1.1
+pem==21.2.0
+pycryptodome==3.10.1
+PyJWT==1.7.1
+
+# Test packages
+
+pytest==6.2.4
+pytest-asyncio==0.15.1
+pytest-xdist==2.2.1
+
+requests==2.25.1

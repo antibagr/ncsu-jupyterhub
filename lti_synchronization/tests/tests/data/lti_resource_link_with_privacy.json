@@ -1,0 +1,91 @@
+{
+    "aud": "125900000000000094",
+    "azp": "125900000000000094",
+    "errors": {
+        "errors": {}
+    },
+    "exp": 1595538982,
+    "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint": {
+        "errors": {
+            "errors": {}
+        },
+        "lineitems": "https://moodle.instructure.com/api/lti/courses/169/line_items",
+        "scope": [
+            "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
+            "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly",
+            "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly",
+            "https://purl.imsglobal.org/spec/lti-ags/scope/score"
+        ],
+        "validation_context": null
+    },
+    "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice": {
+        "context_memberships_url": "https://moodle.instructure.com/api/lti/courses/169/names_and_roles",
+        "errors": {
+            "errors": {}
+        },
+        "service_versions": [
+            "2.0"
+        ],
+        "validation_context": null
+    },
+    "https://purl.imsglobal.org/spec/lti/claim/context": {
+        "errors": {
+            "errors": {}
+        },
+        "id": "41c4731cc7668aef2eddeeb99132ba6239d8e058",
+        "label": "intro101",
+        "title": "intro101",
+        "type": [
+            "http://purl.imsglobal.org/vocab/lis/v2/course#CourseOffering"
+        ],
+        "validation_context": null
+    },
+    "https://purl.imsglobal.org/spec/lti/claim/custom": {
+        "lms_user_id": 4
+    },
+    "https://purl.imsglobal.org/spec/lti/claim/deployment_id": "905:41c4731cc7668aef2eddeeb99132ba6239d8e058",
+    "https://purl.imsglobal.org/spec/lti/claim/launch_presentation": {
+        "document_target": "iframe",
+        "errors": {
+            "errors": {}
+        },
+        "height": 400,
+        "locale": "en",
+        "return_url": "https://moodle.instructure.com/courses/169/external_content/success/external_tool_redirect",
+        "validation_context": null,
+        "width": 800
+    },
+    "https://purl.imsglobal.org/spec/lti/claim/message_type": "LtiResourceLinkRequest",
+    "https://purl.imsglobal.org/spec/lti/claim/resource_link": {
+        "description": null,
+        "errors": {
+            "errors": {}
+        },
+        "id": "41c4731cc7668aef2eddeeb99132ba6239d8e058",
+        "title": null,
+        "validation_context": null
+    },
+    "https://purl.imsglobal.org/spec/lti/claim/roles": [
+        "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator",
+        "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor",
+        "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor",
+        "http://purl.imsglobal.org/vocab/lis/v2/system/person#User"
+    ],
+    "https://purl.imsglobal.org/spec/lti/claim/target_link_uri": "https://test.moodle.com/",
+    "https://purl.imsglobal.org/spec/lti/claim/tool_platform": {
+        "errors": {
+            "errors": {}
+        },
+        "guid": "srnuz6h1U8kOMmETzoqZTJiPWzbPXIYkAUnnAJ4u:canvas-lms",
+        "name": "moodle",
+        "product_family_code": "canvas",
+        "validation_context": null,
+        "version": "cloud"
+    },
+    "https://purl.imsglobal.org/spec/lti/claim/version": "1.3.0",
+    "iat": 1595535382,
+    "iss": "https://canvas.instructure.com",
+    "locale": "en",
+    "nonce": "02cb8d54c4e0f7678a3c5bcbff70095349d18994cf727c1f5efe7724e40ca766",
+    "sub": "8171934b-f5e2-4f4e-bdbd-6d798615b93e"
+}
