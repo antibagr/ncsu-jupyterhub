@@ -6,17 +6,17 @@ from datetime import datetime
 
 from loguru import logger
 
+from custom_inherit import DocInheritMeta
 from moodle.helper import NBGraderHelper
-from moodle.grades.errors import (AssignmentWithoutGradesError,
-                                  GradesSenderCriticalError,
-                                  GradesSenderMissingInfoError)
+from .errors import (AssignmentWithoutGradesError,
+                     GradesSenderCriticalError, GradesSenderMissingInfoError)
 from moodle.lti13.auth import get_lms_access_token
 
 from nbgrader.api import Course, Gradebook, MissingEntry
 from tornado.httpclient import AsyncHTTPClient
 
 
-class GradesBaseSender:
+class GradesBaseSender(metaclass=DocInheritMeta(style='google_with_merge', include_special_methods=True)):
     '''
     This class helps to send student grades from nbgrader database.
     Classes that inherit from this class must implement
@@ -26,24 +26,54 @@ class GradesBaseSender:
         course_id (str): Course id or name used in nbgrader
         assignment_name (str): Assignment name that needs to be processed
             and from which the grades are retrieved
+
+    Attributes:
+        helper (NBGraderHelper): .
+        course (Course): .
+        all_lineitems (list): .
+        headers (dict): .
+        course_id (str): .
+        assignment_name (str): .
+
     '''
 
     def __init__(self, course_id: str, assignment_name: str):
+        '''
+        Check if required enviroments is set.
+
+        Args:
+            course_id (str): .
+            assignment_name (str): .
+
+        Raises:
+            EnvironmentError: If one of environment variable is not set.
+
+        '''
+
+        envs = ('LTI13_PRIVATE_KEY', 'LTI13_TOKEN_URL', 'LTI13_CLIENT_ID')
+
+        if any(os.environ.get(env) is None for env in envs):
+            raise EnvironmentError(', '.join(envs) + ' should be set.')
 
         self.course_id = course_id
         self.assignment_name = assignment_name
 
         self.helper = NBGraderHelper()
 
+        self.course = self.helper.get_course(self.course_id)
+
+        self.all_lineitems = []
+        self.headers = {}
+
     async def send_grades(self):
         raise NotImplementedError
 
     @property
-    def grader_name(self):
+    def grader_name(self) -> str:
         return f'grader-{self.course_id}'
 
     @property
-    def gradebook_dir(self):
+    def gradebook_dir(self) -> str:
         return f'/home/{self.grader_name}/{self.course_id}'
 
     def _retrieve_grades_from_db(self) -> t.Tuple[int, t.List[dict]]:
@@ -98,26 +128,7 @@ class LTI13GradeSender(GradesBaseSender):
     obtained in authentication flow and it indicates us where send the scores
     So the assignment item in the database should contains the 'lms_lineitem_id'
     with something like /api/lti/courses/:course_id/line_items/:line_item_id
-
-    Attrs:
-        course_id: It's the course label obtained from lti claims
-        assignment_name: the asignment name used on the nbgrader console
     '''
-
-    def __init__(self, course_id: str, assignment_name: str):
-
-        super().__init__(course_id, assignment_name)
-
-        self.private_key_path = os.environ.get('LTI13_PRIVATE_KEY')
-        self.lms_token_url = os.environ.get('LTI13_TOKEN_URL')
-        self.lms_client_id = os.environ.get('LTI13_CLIENT_ID')
-
-        # retrieve the course entity from nbgrader-gradebook
-        course = self.helper.get_course(self.course_id)
-
-        self.course = course
-        self.all_lineitems = []
-        self.headers = {}
 
     def _get_course(self) -> Course:
         '''
@@ -190,6 +201,9 @@ class LTI13GradeSender(GradesBaseSender):
                 await self._get_lineitems_from_url(next_url)
 
     async def _get_line_item_info_by_assignment_name(self) -> str:
+        '''
+        Returns JSON.
+        '''
 
         await self._get_lineitems_from_url(self.course.lms_lineitems_endpoint)
 
@@ -234,16 +248,22 @@ class LTI13GradeSender(GradesBaseSender):
         return lineitem_info
 
     async def _set_access_token_header(self):
+        '''
+        Sets header dict of self.
+        '''
 
         token = await get_lms_access_token(
-            self.lms_token_url, self.private_key_path, self.lms_client_id
+            os.environ.get('LTI13_TOKEN_URL'), os.environ.get(
+                'LTI13_PRIVATE_KEY'), os.environ.get('LTI13_CLIENT_ID')
         )
 
         if 'access_token' not in token:
 
-            logger.info(f'response from {self.lms_token_url}: {token}')
+            logger.info(
+                f'response from {os.environ.get("LTI13_TOKEN_URL")}: {token}')
 
-            raise GradesSenderCriticalError('The "access_token" key is missing')
+            raise GradesSenderCriticalError(
+                'The "access_token" key is missing')
 
         # set all the headers to use in lms requests
         self.headers = {
@@ -251,7 +271,10 @@ class LTI13GradeSender(GradesBaseSender):
             'Content-Type': 'application/vnd.ims.lis.v2.lineitem+json',
         }
 
-    async def send_grades(self):
+    async def send_grades(self) -> None:
+        '''
+        Send grades to LMS iteratively.
+        '''
 
         _, nbgrader_grades = self._retrieve_grades_from_db()
 

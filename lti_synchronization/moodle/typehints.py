@@ -1,35 +1,71 @@
+'''
+Typing aliases used in the moodle package.
+Previously it was defined as real typing aliases, like this one:
+
+User = Dict[Literal['id', 'first_name', 'last_name', 'username', 'email', 'role'], Union[str, int, Role]]
+
+But it turns out that Sphinx 'unpack' variables in generated documentation,
+so we see full Dict[Literal[...]] instead of simply 'User' as in the source code
+
+We decided then to transform these type aliases into string to improve docs
+readability. Obvious disatvantage of this decicion is we could not use type
+checker on these anymore, but it could be fixed with some dynamic assignment::
+
+if os.getenv('MAKING_DOCUMENTATION'):
+    User = 'User'
+else:
+    User = User = Dict[Literal[...], Union[...]]
+
+'''
 import os
 import pathlib
 import typing as t
 
-from moodle.settings import ROLES
+from .settings import ROLES
 
-''' Typing Hints '''
 
 Serializable = t.Union[str, int, float, bool, None]
 
-JsonContent = t.Union[
-    Serializable,
-    t.List[Serializable],
-    t.Tuple[Serializable, ...],
-    t.MutableMapping[str, Serializable],
-]
+JsonContent = 'JsonContent'
+'''
+Alias for Union[Serializable, List[Serializable], Tuple[Serializable, ...], MutableMapping[str, Serializable]]
+'''
 
-Json = t.MutableMapping[t.Hashable, JsonContent]
+Json = 'Json'
+''' Alias for t.MutableMapping[t.Hashable, JsonContent] '''
 
-JsonType = t.Union[Json, t.Sequence[Json]]
+JsonType = 'JsonType'
+''' Alias for t.Union[Json, t.Sequence[Json]] '''
 
 PathLike = t.Union[str, pathlib.Path, os.PathLike]
 
 Role = t.Literal['foo']
+'''
+Literal for roles strings available at settings.ROLES
+'''
 
 # We generate Literal dynamically
 Role.__args__ = ROLES
 
-User = t.Dict[t.Literal['id', 'first_name', 'last_name',
-                        'username', 'email', 'role'], t.Union[str, int, Role]]
+User = 'User'
+'''Alias for
 
-Course = t.Dict[t.Literal['id', 'title', 'short_name',
-                          'instructors', 'graders', 'students'], t.Union[str, t.List[User]]]
+Dict[Literal['id', 'first_name', 'last_name', 'username', 'email', 'role'], Union[str, int, Role]]
+'''
 
-ByteParams = t.Dict[t.Hashable, t.List[bytes]]
+Course = 'Course'
+'''Alias for
+
+Dict[Literal['id', 'title', 'short_name', 'instructors', 'graders', 'students'], Union[str, List[User]]]
+'''
+
+
+ByteParams = 'ByteParams'
+'''
+Alias for Dict[Hashable, List[bytes]]
+'''
+
+Dirs = t.Tuple[PathLike, ...]
+'''
+Tuple of PathLike objects
+'''

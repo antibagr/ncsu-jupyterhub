@@ -1,4 +1,5 @@
 import json
+from collections import abc
 import typing as t
 
 from requests.models import Response
@@ -70,3 +71,9 @@ class FluidResponse:
             assert isinstance(key, int), f'index of a list must be integer. {type(key)} given.'
 
         self.resp[key] = value
+
+    def items(self) -> t.Optional[abc.ItemsView]:
+        if isinstance(self, dict):
+            return self.resp.items()
+
+        raise AttributeError('items')

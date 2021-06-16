@@ -5,6 +5,7 @@ import string
 import typing as t
 
 import pytest
+
 from moodle.client.api import MoodleClient
 from moodle.client.helper import MoodleDataHelper
 from moodle.settings import ROLES
@@ -12,7 +13,7 @@ from moodle.typehints import Course, Role, User
 from moodle.utils import JsonDict
 
 
-def pytest_sessionfinish(session, exitstatus):
+def pytest_sessionfinish(*_):
     asyncio.get_event_loop().close()
 
 
@@ -37,11 +38,22 @@ def event_loop():
 
 
 @pytest.fixture
-def client() -> MoodleClient:
+def get_client() -> t.Callable[[], MoodleClient]:
+
+    def _get_client(url: str = None, key: str = None):
+        return MoodleClient(
+            url or 'https://rudie.moodlecloud.com',
+            key or '0461b4a7e65e63921172fa3727f0863c'
+        )
+    return _get_client
+
+
+@pytest.fixture
+def client(get_client) -> MoodleClient:
     '''
     Instantiated client with dev server credentials.
     '''
-    return MoodleClient('https://rudie.moodlecloud.com', '0461b4a7e65e63921172fa3727f0863c')
+    return get_client()
 
 
 @pytest.fixture
@@ -103,7 +115,8 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Any, ...], Course]:
     def _course_fabric(*,
                        id: t.Optional[int] = None,
                        title: t.Optional[str] = None,
-                       short_name: t.Optional[str] = None,
+                       course_id: t.Optional[str] = None,
+                       category: t.Optional[int] = None,
                        instructors: t.Optional[t.List[User]] = None,
                        students: t.Optional[t.List[User]] = None,
                        graders: t.Optional[t.List[User]] = None,
@@ -115,9 +128,9 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Any, ...], Course]:
         if id and not isinstance(id, int):
             raise TypeError('User id must be int.')
 
-        if short_name and re.findall(r'\W+', short_name):
+        if course_id and re.findall(r'\W+', course_id):
             raise ValueError(
-                'Short name contains invalid characters: %s' % short_name)
+                'Short name contains invalid characters: %s' % course_id)
 
         # Python does strange things
         # with lists in default values ...
@@ -132,7 +145,8 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Any, ...], Course]:
         return JsonDict({
             'id': id or random.randint(1, 100),
             'title': title or random_string(20),
-            'short_name': short_name or random_string(20),
+            'course_id': course_id or random_string(20),
+            'category': category or random.randint(0, 100),
             'instructors': [] or [user_fabric() for _ in range(random.randint(0, 5))],
             'students': [] or [user_fabric() for _ in range(random.randint(0, 5))],
             'graders': [] or [user_fabric() for _ in range(random.randint(0, 5))],

@@ -1,11 +1,11 @@
+''' Function utils '''
+
 import json
 import typing as t
 from functools import wraps
 
 from loguru import logger
-from moodle.typehints import Course, JsonType, User
-
-''' Function utils '''
+from .typehints import JsonType
 
 
 def dump_json(dict_in: JsonType) -> str:
@@ -43,14 +43,20 @@ class Grader(int):
     Overload division method.
     To create a grader name simply use division:
 
-    grader / 'test_course'
-    >>> 'grader-test_course'
+    Examples:
+
+        Use with course id::
+
+            >>> grader / 'test_course'
+            >>> 'grader-test_course'
     '''
 
     @staticmethod
     def __truediv__(course_id: str) -> str:
-        assert isinstance(
-            course_id, str), 'provide course id to generate grader name.'
+
+        if not isinstance(course_id, str):
+            raise TypeError('provide course id to generate grader name.')
+
         return f'grader-{course_id}'
 
 
@@ -58,21 +64,28 @@ grader = Grader()
 
 
 class JsonDict(dict):
-    '''
-    Javascript-style json
-    You can access values in dict as dict's attributes.
+    '''Javascript-style json. You can access values in dict as dict's attributes.
 
-    new_json = JsonDict(key='value')
-    new_json.key
-    >>> 'value'
+    Examples:
 
-    new_json.key = 'something new'
-    new_json
-    >>> {'key': 'something new'}
+        You can access keys like instance's properties::
 
-    del new_json.key
-    new_json
-    >>> {}
+            new_json = JsonDict(key='value')
+            new_json.key
+            >>> 'value'
+
+        You can set keys as properties::
+
+            new_json.key = 'something new'
+            new_json
+            >>> {'key': 'something new'}
+
+        Finally, it's allowed to delete attributes to remove appropriate keys::
+
+            del new_json.key
+            new_json
+            >>> {}
+
     '''
 
     def __getattr__(self, key: t.Hashable) -> t.Any:

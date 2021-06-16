@@ -16,8 +16,21 @@ Site administration / Plugins / Web services / External services / Functions
 - core_enrol_get_enrolled_users
 
 Create a token for REST API user. Paste it to .env file as follow:
+
 MOODLE_REST_API_TOKEN=<generated_token>
 
 Check that Moodle is published as LTI Tool
 
 https://docs.moodle.org/311/en/Publish_as_LTI_tool
+
+=======================================================
+.. automodule:: lti_synchronization.moodle
+    :members:
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+Indices and tables
+==================
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

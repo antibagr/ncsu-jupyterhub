@@ -6,13 +6,17 @@ from moodle.typehints import Course, JsonType, User
 from moodle.utils import JsonDict, grader
 from nbgrader.api import Assignment, Gradebook, InvalidEntry
 from nbgrader.api import Course as NBCourse
-from traitlets.config import LoggingConfigurable
+from custom_inherit import DocInheritMeta
+# from traitlets.config import LoggingConfigurable
 
 
-class MoodleBasicHelper(LoggingConfigurable):
+class MoodleBasicHelper(metaclass=DocInheritMeta(
+            style='google_with_merge',
+            include_special_methods=True
+        )):
 
-    @staticmethod
-    def format_string(string: str) -> str:
+    @classmethod
+    def format_string(cls, string: str) -> str:
         '''
         Replace all invalid characters with underscore.
 
@@ -31,8 +35,8 @@ class MoodleBasicHelper(LoggingConfigurable):
 
         return string.lstrip('_.-').lower()[:50]
 
-    @staticmethod
-    def email_to_username(email: str) -> str:
+    @classmethod
+    def email_to_username(cls, email: str) -> str:
         '''
         Normalizes an email to get a username. This function
         calculates the username by getting the string before the
@@ -41,13 +45,13 @@ class MoodleBasicHelper(LoggingConfigurable):
         has an integer value already in the string.
 
         Args:
-          email: A valid email address
+            email: A valid email address
 
         Returns:
-          username: A username string
+            str: A username string
 
         Raises:
-          ValueError if email is empty
+          ValueError: if email is empty
         '''
 
         if not email:
@@ -67,8 +71,20 @@ class MoodleBasicHelper(LoggingConfigurable):
 
         return username
 
-    @staticmethod
-    def get_user_group(user: User) -> str:
+    @classmethod
+    def get_user_group(cls, user: User) -> str:
+        '''Map LMS user's role to one of student, instructor or a grader.
+
+        Args:
+            user (User): User dict with 'role' key
+
+        Returns:
+            str: Jupyterhub role
+
+        Raises:
+            KeyError: No appropriate role was found.
+
+        '''
 
         if user['role'] == 'student':
             group = 'students'
@@ -81,25 +97,38 @@ class MoodleBasicHelper(LoggingConfigurable):
 
         return group
 
-    @staticmethod
-    def format_course(course: JsonType) -> Course:
-        '''
-        Format raw json response to convinient dictionary.
+    @classmethod
+    def format_course(cls, course: JsonType) -> Course:
+        '''Format raw json response to convinient dictionary.
+
+        Args:
+            course (JsonType): Raw Json from LMS containing course data.
+
+        Returns:
+            Course: JsonDict with course information
+
         '''
 
         return JsonDict({
                 'id': course['id'],
+                'course_id': course['shortname'],
                 'title': course['displayname'],
-                'short_name': course['shortname'],
+                'category': course['categoryid'],
                 'instructors': [],
                 'students': [],
                 'graders': [],
         })
 
-    @staticmethod
-    def format_user(user: JsonType) -> User:
-        '''
-        Format raw json response to convinient dictionary.
+    @classmethod
+    def format_user(cls, user: JsonType) -> User:
+        '''Format raw json response to convinient dictionary.
+
+        Args:
+            user (JsonType): Raw Json from LMS containing user data.
+
+        Returns:
+            User: JsonDict with user information
+
         '''
 
         return JsonDict({
@@ -121,11 +150,10 @@ class NBGraderHelper(MoodleBasicHelper):
     _dbs: t.Dict[str, Gradebook]
 
     def __init__(self):
-        self._dbs = {}
-        super().__init__()
 
-    @staticmethod
-    def _get_db(course_id: str) -> Gradebook:
+        self._dbs = {}
+
+    def _get_db(self, course_id: str) -> Gradebook:
         '''
         Create new connection to sqlite database.
         '''
@@ -204,15 +232,13 @@ class NBGraderHelper(MoodleBasicHelper):
 
         Args:
             assignment_name: The assingment's name
+
         Raises:
             InvalidEntry: when there was an error adding the assignment to the database
         '''
 
         if not assignment_name:
             raise ValueError('assignment_name missing')
-
-        logger.debug(
-            'Assignment name normalized %s to save in gradebook' % assignment_name)
 
         assignment: t.Optional[Assignment] = None
 

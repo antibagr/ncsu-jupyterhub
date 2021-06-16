@@ -1,7 +1,7 @@
 import json
 
-from moodle.grades import errors
-from moodle.grades.senders import LTI13GradeSender
+from . import errors
+from .senders import LTI13GradeSender
 from tornado import web
 
 from jupyterhub.handlers import BaseHandler

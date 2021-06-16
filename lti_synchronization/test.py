@@ -70,7 +70,7 @@ c.LTI13Authenticator.token_url = os.environ.get(
     'LTI13_TOKEN_URL', 'https://illumidesk.instructure.com/login/oauth2/token')
 
 c.JupyterHub.extra_handlers = [
-    (r'/lti13/config$', f'{MODULE_NAME}.handlers.LTI13ConfigHandler'),
+    (r'/lti13/config$', f'{MODULE_NAME}.lti13.handlers.LTI13ConfigHandler'),
     (r'/lti13/jwks$', f'{MODULE_NAME}.lti13.handlers.LTI13JWKSHandler'),
     (r'/submit-grades/(?P<course_id>\w+)/(?P<assignment_name>\w+)',
      f'{MODULE_NAME}.grades.SendGradesHandler'),
@@ -122,11 +122,11 @@ c.Spawner.args = ['--allow-root']
 c.JupyterHub.admin_access = True
 
 c.LTIAuthenticator.allowed_users = {
-    'grader-first_course', 'grader-your_school', 'api_user', 'admin'
+    'grader-first_course', 'admin', 'api_user', 'grader-your_school'
 }
 
 c.Authenticator.admin_users = {
-    'admin', 'grader-first_course', 'api_user', 'grader-Your School'
+    'grader-Your School', 'grader-first_course', 'admin', 'api_user'
 }
 
 c.JupyterHub.load_groups = {
@@ -153,7 +153,7 @@ c.JupyterHub.services = [{
     'cwd':
     '/home/grader-your_school',
     'api_token':
-    '7031d88c4e2b0f1dafa0a78bda263c0413cf94f6354a1779b174026a3e0f7ce3',
+    '5df6e08fec9b392a5c6d1301dc3ee0115d8296d10735271a40ae6fdd32ad92a8',
     'environment': {
         'JUPYTERHUB_SERVICE_USER': 'grader-your_school'
     }
@@ -173,15 +173,15 @@ c.JupyterHub.services = [{
     'cwd':
     '/home/grader-first_course',
     'api_token':
-    '4fb54074520b0d286e7164d1d64ca0d6084575fbef0ba8e86d217cf570c44886',
+    'c4c448383d9094b86e297a3f8f618a381b0791a8fc064b4015ef8a3644bd67c2',
     'environment': {
         'JUPYTERHUB_SERVICE_USER': 'grader-first_course'
     }
 }]
 
 c.JupyterHub.api_tokens = {
-    '7031d88c4e2b0f1dafa0a78bda263c0413cf94f6354a1779b174026a3e0f7ce3':
+    '5df6e08fec9b392a5c6d1301dc3ee0115d8296d10735271a40ae6fdd32ad92a8':
     'grader-your_school',
-    '4fb54074520b0d286e7164d1d64ca0d6084575fbef0ba8e86d217cf570c44886':
+    'c4c448383d9094b86e297a3f8f618a381b0791a8fc064b4015ef8a3644bd67c2':
     'grader-first_course'
 }

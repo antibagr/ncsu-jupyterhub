@@ -6,16 +6,15 @@ from urllib.parse import quote, urlencode
 import pem
 from Crypto.PublicKey import RSA
 from moodle.authentication.helper import LTIHelper
-from moodle.lti13.auth import get_jwk
-from moodle.lti13.templates import get_lti13_keys
+from .auth import get_jwk
+from .templates import get_lti13_keys
 from tornado import web
 
 from jupyterhub.handlers import BaseHandler
 
 
 class LTI13ConfigHandler(BaseHandler):
-    '''
-    Handles JSON configuration file for LTI 1.3
+    '''Handles JSON configuration file for LTI 1.3
     '''
 
     async def get(self) -> None:
@@ -51,8 +50,7 @@ class LTI13ConfigHandler(BaseHandler):
 
 
 class LTI13JWKSHandler(BaseHandler):
-    '''
-    Handler to serve our JWKS
+    '''Handler to serve our JWKS
     '''
 
     def get(self) -> None:

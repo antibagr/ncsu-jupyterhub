@@ -2,7 +2,7 @@ import os
 import typing as t
 
 from loguru import logger
-from moodle.integration.templates import Config
+from .templates import Config
 from moodle.typehints import PathLike
 from moodle.utils import JsonDict, grader
 from yapf.yapflib.yapf_api import FormatCode
@@ -60,7 +60,7 @@ class Templater:
 
             logger.warning(f'Old {file_path!r} will be overwritten.')
 
-        with open('test.py', 'w') as jupyterhub_config:
+        with open(file_path, 'w') as jupyterhub_config:
 
             jupyterhub_config.write(
                 FormatCode(
@@ -119,10 +119,6 @@ class Templater:
 
         Args:
             course_id (str): Normalized name of the course
-
-        Returns:
-            None
-
         '''
 
         course_grader: str = grader / course_id

@@ -8,14 +8,14 @@ from secrets import token_hex
 from loguru import logger
 from moodle.file_worker import FileWorker
 from moodle.helper import NBGraderHelper
-from moodle.integration.system import SystemCommand
-from moodle.integration.template import Templater
+from . import system
+from .template import Templater
 from moodle.settings import BASE_DIR
-from moodle.typehints import Course, JsonType, User
-from moodle.utils import grader
+from moodle.typehints import Course, JsonType, User, PathLike
+from moodle.utils import grader, JsonDict
 
 
-class IntegrationManager:
+class SyncManager:
     '''
     Manager class for setup Jupyterhub with data received from Moodle.
 
@@ -48,7 +48,7 @@ class IntegrationManager:
 
     whitelist: set
 
-    courses: JsonType
+    courses: t.List[Course]
 
     groups: defaultdict
 
@@ -61,8 +61,6 @@ class IntegrationManager:
         self.helper = NBGraderHelper()
 
         self.temp = Templater()
-
-        self.system = SystemCommand()
 
         self.admin_users = set()
         self.whitelist = set()
@@ -116,20 +114,19 @@ class IntegrationManager:
 
         course_grader: str = grader / course_id
 
-        self.system.create_user(course_grader)
+        system.create_user(course_grader)
 
         course_dir = Path(f'/home/{course_grader}/{course_id}')
 
         jupyter = f'/home/{course_grader}/.jupyter'
 
-        self.system.create_dirs(jupyter, course_dir / 'source')
+        system.create_dirs(jupyter, course_dir / 'source')
 
         self.temp.write_grader_config(course_id)
 
-        self.system.chown(course_grader, jupyter, course_dir
-                          / 'source', course_dir, group=course_grader)
+        system.chown(course_grader, jupyter, course_dir / 'source', course_dir, group=course_grader)
 
-        self.system.enable_nbgrader(course_grader)
+        system.enable_nbgrader(course_grader)
 
     def add_users(self, course: Course) -> None:
         '''
@@ -164,7 +161,7 @@ class IntegrationManager:
 
                 self.helper.add_student(course['short_name'], user)
 
-            self.system.create_user(username)
+            system.create_user(username)
 
     def load_course(self, course: Course) -> None:
         '''
@@ -197,32 +194,51 @@ class IntegrationManager:
         Read data fetched from Moodle and load courses into self.
         '''
 
-        self.courses = FileWorker().load_json()
+        _titles = []
 
-        courses_titles = list(map(itemgetter('title'), self.courses))
+        for raw_course in FileWorker().load_json():
 
-        logger.debug(
-            f'{len(self.courses)} courses found: {", ".join(courses_titles)}')
+            course = JsonDict(raw_course)
+
+            self.courses.append(course)
+
+            _titles.append(course.title)
+
+        logger.debug(f'{len(_titles)} courses found: {", ".join(_titles)}')
 
         for course in self.courses:
 
             self.load_course(course)
 
-    def update_jupyterhub(self) -> None:
-        '''
-        Generate new jupyterhub_config.py file with data
-        Retrieved from Moodle (courses, instructors, and students)
+    def update_jupyterhub(
+            self,
+            in_file: t.Optional[PathLike] = None,
+            out_file: t.Optional[PathLike] = None,
+        ) -> None:
+        '''Updates jupyterhub_config file with data received from Moodle LMS.
+
+        After calling moodle.client.api.MoodleClient.download_json method,
+        formatted json file should be available on the disk system.
+        We can now synchronize Jupyterhub configuration file using the data
+        about courses and enrolled users.
+
+        Args:
+            in_file (t.Optional[PathLike]):
+                Pass template file if it differs from default. Defaults to None
+            out_file (t.Optional[PathLike]):
+                Pass jupyterhub_config location if it differs from default.
+                Defaults to None.
         '''
 
         with suppress(KeyboardInterrupt):
 
             default_config: str = self.temp.get_default_jupyterhub_config(
-                self.path.in_file)
+                in_file or self.path.in_file)
 
             self.load_data()
 
             self.temp.update_jupyterhub_config(
-                self.path.out_file,
+                out_file or self.path.out_file,
                 default_config,
                 **{
                     'admin_users': self.admin_users,

@@ -35,6 +35,25 @@ async def get_lms_access_token(
 
     '''
 
+    def _get_params() -> t.Generator:
+        '''
+        Formatted parameters to send to logger.
+        '''
+
+        yield dump_json({k: str(v) for k, v in token_params.items()})
+        yield token[-5:]
+        yield dump_json({'scope': scope.split()})
+
+        _dict = {**params, 'client_assertion': params['client_assertion'][-5:]}
+
+        yield dump_json({k: str(v) for k, v in _dict.items()})
+
+        if 'f_exc' in globals():
+            yield f_exc.response.body if f_exc.response else f_exc.message
+        else:
+            yield json.loads(resp.body)
+
+
     token_params = {
         'iss': client_id,
         'sub': client_id,
@@ -44,8 +63,9 @@ async def get_lms_access_token(
         'jti': str(uuid.uuid4()),
     }
 
-    logger.debug('Getting lms access token with parameters\n%s' %
-                 dump_json({k: str(v) for k, v in token_params.items()}))
+    _params = _get_params()
+
+    logger.debug('Getting lms access token with parameters\n%s' % next(_params))
 
     # get the pem-encoded content
     private_key = get_pem_text_from_file(private_key_path)
@@ -55,7 +75,7 @@ async def get_lms_access_token(
     token = jwt.encode(token_params, private_key,
                        algorithm='RS256', headers=headers)
 
-    logger.debug(f'Obtaining token %s' % token[-5:])
+    logger.debug('Obtaining token %s' % next(_params))
 
     scope: str = scope or ' '.join([
         'https://purl.imsglobal.org/spec/lti-ags/scope/score',
@@ -64,7 +84,7 @@ async def get_lms_access_token(
         'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly',
     ])
 
-    logger.debug('Scope is %s' % dump_json({'scope': scope.split()}))
+    logger.debug('Scope is %s' % next(_params))
 
     params = {
         'grant_type': 'client_credentials',
@@ -73,10 +93,7 @@ async def get_lms_access_token(
         'scope': scope,
     }
 
-    logger.debug('OAuth parameters are:\n\n%s' % dump_json(
-            {k: str(v) for k, v in {**params, 'client_assertion': params['client_assertion'][-5:]}.items()}
-        )
-    )
+    logger.debug('OAuth parameters are:\n\n%s' % next(_params))
 
     client = AsyncHTTPClient()
 
@@ -84,20 +101,27 @@ async def get_lms_access_token(
 
     try:
         resp = await client.fetch(token_endpoint, method='POST', body=body, headers=None)
-    except HTTPClientError as e:
+    except HTTPClientError as f_exc:
 
-        logger.info(
-            f'Error by obtaining a token with lms. Detail: {e.response.body if e.response else e.message}'
-        )
-
+        logger.info('Error by obtaining a token with lms. Detail: %s' % next(_params))
         raise
 
-    logger.debug('Token response body is %s' % json.loads(resp.body))
+    logger.debug('Token response body is %s' % next(_params))
 
     return json.loads(resp.body)
 
 
 def get_jwk(public_key: str) -> dict:
+    '''
+    Load public key as dictionary
+
+    Args:
+        public_key (str): Path to pem
+
+    Returns:
+        dict: Exported public key
+
+    '''
 
     jwk_obj = JWK.from_pem(public_key)
 
@@ -137,17 +161,27 @@ def get_headers_to_jwt_encode(private_key_text: str) -> t.Optional[dict]:
 
 def get_pem_text_from_file(private_key_path: str) -> str:
     '''
-    Parses the pem file to get its value as unicode text
+    Parses the pem file to get its value as unicode text.
+    Check the pem permission, parse file generates
+    a list of PEM objects and return plain text from it.
+
+    Args:
+        private_key_path (str): Path to the private key file.
+
+    Returns:
+        str: Text from PEM parsed file
+
+    Raises:
+        PermissionError: PEM File is not accessible
+        ValueError: PEM file is invalid, no certificates found.
     '''
 
-    # check the pem permission
     if not os.access(private_key_path, os.R_OK):
         raise PermissionError()
 
-    # parse file generates a list of PEM objects
     certs = pem.parse_file(private_key_path)
 
     if not certs:
-        raise Exception('Invalid pem file.')
+        raise ValueError('Invalid pem file.')
 
     return certs[0].as_text()

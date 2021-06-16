@@ -4,29 +4,32 @@ from pathlib import Path
 import typing as t
 
 from loguru import logger
+from custom_inherit import doc_inherit
 
-from moodle.typehints import PathLike
-
-
-Dirs = t.Tuple[PathLike, ...]
+from moodle.typehints import Dirs
 
 
 def join_dirs(dirs: Dirs) -> str:
     '''
     Concat directories' names.
-    Raises TypeError if any of the directory
-    in the tuple is not one of str, pathlib.Path or os.PathLike.
-    Raises ValueError if dirs is not provided.
 
-        join_dirs([Path('/home/john/'), '/home/john/pictures/'])
+    Examples:
 
-        >>> '/home/john/ /home/john/pictures/'
+        Pass directories as strings or Path objects::
+
+            join_dirs([Path('/home/john/'), '/home/john/pictures/'])
+
+            >>> '/home/john/ /home/john/pictures/'
 
     Args:
-        dirs (Dirs): Tuple of PathLike objects.
+        dirs (Dirs): tuple of PathLike objects.
 
     Returns:
-        str: line of joined directories' names
+        str: string of joined directories' names
+
+    Raises:
+        TypeError:
+            one item in the dirs is not one of str, pathlib.Path or os.PathLike
 
     '''
 
@@ -38,114 +41,132 @@ def join_dirs(dirs: Dirs) -> str:
     for d in dirs:
         if not isinstance(d, (str, Path, os.PathLike)):
             raise TypeError(f'Invalid type of dir {d}: {type(d)}')
+        if not d:
+            raise ValueError(f'Empty directory: {d}')
 
         str_dirs.append(str(d))
 
     return ' '.join(str_dirs)
 
 
-class SystemCommand:
+@functools.singledispatch
+def create_dirs(*dirs) -> None:
     '''
+    Create new directories in the system.
 
-    Class for interact with Unix service.
+    Examples:
 
-    Used to managing directories, permissions, users and nbgrader extensions.
-
-    '''
-
-    @functools.singledispatchmethod
-    def create_dirs(self, *dirs: Dirs) -> None:
-        '''
-        Create new directories in the system.
-
-        Can be called with unpacked dirs and with iterable as a first argument:
+        Can be called with unpacked dirs
+        and with iterable as first argument::
 
             SystemCommand.create_dirs('dir1', 'dir2')
             SystemCommand.create_dirs(['dir1', 'dir2'])
             SystemCommand.create_dirs(('dir1', 'dir2'))
 
-        Args:
-            *dirs (Dirs): Tuple of PathLike objects.
+    Args:
+        *dirs (Dirs): tuple of PathLike objects.
 
-        '''
+    '''
 
-        # make unrelated directories
-        # in contrast with os.mkdirs
-        os.system(f'mkdir -p {join_dirs(dirs)}')
+    # make unrelated directories
+    # in contrast with os.mkdirs
+    os.system(f'mkdir -p {join_dirs(dirs)}')
 
-        logger.debug(f'Create {len(dirs)} directories: {join_dirs(dirs)}.')
+    logger.debug(f'Create {len(dirs)} directories: {join_dirs(dirs)}.')
 
-    @create_dirs.register(list)
-    @create_dirs.register(tuple)
-    def _create_dirs(self, dirs: Dirs): self.create_dirs(*dirs)
 
-    def create_database(self, grader: str) -> None:
-        '''
-        Create new sqlite database if not exists already.
-        Setup permissions to 644 and owner to a grader.
+@doc_inherit(create_dirs)
+@create_dirs.register(tuple)
+@create_dirs.register(list)
+def _create_dirs(dirs):
+    create_dirs(*dirs)
 
-        Args:
-            grader (str): Course's grader name
 
-        '''
+def create_database(grader: str) -> None:
+    '''
+    Create new sqlite database if not exists already.
+    Setup permissions to 644 and owner to a grader.
 
-        grader_db: str = f'/home/{grader}/grader.db'
+    Args:
+        grader (str): Course's grader name
 
-        os.system(f'touch {grader_db}')
-        self.chown(grader, grader_db, group=grader)
-        self.chmod(644, grader_db)
+    '''
 
-    def chown(self, user: str, /, *dirs: Dirs, group: t.Optional[str] = None) -> None:
-        '''
-        Change owner of files and / or directories in the system.
+    if grader == '':
+        raise ValueError('Grader must be set.')
 
-        Args:
-            user (str): New owner's name
-            *dirs (Dirs): Tuple of PathLike objects.
-            group: Group name. Used if specified. Defaults to None.
-        '''
+    grader_db: str = f'/home/{grader}/grader.db'
 
-        who_to = user if not group else ':'.join((user, group))
+    os.system(f'touch {grader_db}')
 
-        os.system(f'chown -R {who_to} {join_dirs(dirs)}')
+    chown(grader, grader_db, group=grader)
 
-    def chmod(self, mod: t.Union[str, int], *dirs: Dirs) -> None:
-        '''
-        Update files and / or directories permissions.
+    chmod(644, grader_db)
 
-        Args:
-            mod (t.Union[str, int]): Unix-style permissions.
-            *dirs (Dirs): Tuple of PathLike objects.
 
-        '''
-        os.system(f'chmod {mod} {join_dirs(dirs)}')
+def chown(user: str, /, *dirs: Dirs, group: t.Optional[str] = None) -> None:
+    '''
+    Change owner of files and / or directories in the system.
 
-    @staticmethod
-    def enable_nbgrader(user: str) -> None:
-        '''
-        Activate all nbgrader extensions for the user.
-        We login as the user and activate all nbgrader extensions for such user.
+    Args:
+        user (str): New owner's name
+        *dirs (Dirs): Tuple of PathLike objects.
+        group: Group name. Used if specified. Defaults to None.
+    '''
 
-        Args:
-            user (str): User name.
+    if user == '':
+        raise ValueError('User must be set.')
 
-        '''
+    if group is not None and group == '':
+        raise ValueError('Group should not be empty string.')
 
-        logger.debug(f'Enable nbgrader extension for {user}')
+    who_to = user if not group else ':'.join((user, group))
 
-        os.system(f"""su {user} -c 'jupyter nbextension install --user --py nbgrader --overwrite \
-&& jupyter nbextension enable --user --py nbgrader \
-&& jupyter serverextension enable --user --py nbgrader'""")
+    os.system(f'chown -R {who_to} {join_dirs(dirs)}')
 
-    @staticmethod
-    def create_user(username: str) -> None:
-        '''
-        Create new user in the system.
 
-        Args:
-            username (str): New user's name.
-        '''
+def chmod(mod: t.Union[str, int], *dirs: Dirs) -> None:
+    '''
+    Update files and / or directories permissions.
 
-        logger.info(f'Create linux user {username}.')
+    Args:
+        mod (t.Union[str, int]): Unix-style permissions.
+        *dirs (Dirs): Tuple of PathLike objects.
 
-        os.system(f'adduser -q --gecos "" --disabled-password {username}')
+    '''
+
+    os.system(f'chmod {mod} {join_dirs(dirs)}')
+
+
+def enable_nbgrader(user: str) -> None:
+    '''
+    Activate all nbgrader extensions for the user.
+    We login as the user and activate all nbgrader extensions for such user.
+
+    Args:
+        user (str): User name.
+
+    '''
+
+    if user == '':
+        raise ValueError('User must be set.')
+
+    logger.debug(f'Enable nbgrader extension for {user}')
+
+    os.system(f"su {user} -c 'jupyter nbextension install --user "
+              "--py nbgrader --overwrite && jupyter nbextension enable "
+              "--user --py nbgrader && jupyter serverextension enable "
+              " --user --py nbgrader'")
+
+
+def create_user(username: str) -> None:
+    '''
+    Create new user in the system.
+
+    Args:
+        username (str): New user's name.
+    '''
+
+    logger.info(f'Create linux user {username}.')
+
+    os.system(f'adduser -q --gecos "" --disabled-password {username}')
