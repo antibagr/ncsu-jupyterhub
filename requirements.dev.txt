@@ -6,6 +6,7 @@ jupyter==1.0.0
 jupyterhub==1.4.1
 jwcrypto==0.9.1
 loguru==0.5.3
+lxml==4.6.3
 nbgrader @ git+https://github.com/IllumiDesk/nbgrader@c893fbbfd2f5a0911a2142735af90dadb966dfd2
 notebook==6.4.0
 oauthenticator==14.0.0
@@ -13,6 +14,7 @@ oauthlib==3.1.1
 pem==21.2.0
 pycryptodome==3.10.1
 PyJWT==1.7.1
+yapf==0.31.0
 
 # Test packages
 
