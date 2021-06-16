@@ -1,21 +1,21 @@
-import os
-from unittest import mock
-from pprint import pprint
-
-from dotenv import load_dotenv
-
-from moodle import MoodleClient
-
-
-load_dotenv(verbose=True)
-
-client = MoodleClient()
-
-client.use_categories()
-
-client.load_users()
-
-pprint(client.courses)
+# import os
+# from unittest import mock
+# from pprint import pprint
+#
+# from dotenv import load_dotenv
+#
+# from moodle import MoodleClient
+#
+#
+# load_dotenv(verbose=True)
+#
+# client = MoodleClient()
+#
+# client.use_categories()
+#
+# client.download_json()
+#
+# pprint(client.courses)
 
 
 #

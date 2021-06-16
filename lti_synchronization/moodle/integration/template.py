@@ -18,7 +18,7 @@ class Templater:
         write_nbgrader_config
     '''
 
-    def get_default_jupyterhub_config(self, file_path: PathLike) -> str:
+    def get_default(self, file_path: PathLike) -> str:
         '''Short summary.
 
         Args:

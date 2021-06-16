@@ -39,13 +39,19 @@ JsonType = 'JsonType'
 
 PathLike = t.Union[str, pathlib.Path, os.PathLike]
 
-Role = t.Literal['foo']
+Role = 'Role'
 '''
 Literal for roles strings available at settings.ROLES
-'''
+
+Note:
+    Sphinx failed when the Literal is set. `See this sphinx issue <https://github.com/sphinx-doc/sphinx/issues/9245>`_
+
+t.Literal['foo']
 
 # We generate Literal dynamically
+
 Role.__args__ = ROLES
+'''
 
 User = 'User'
 '''Alias for

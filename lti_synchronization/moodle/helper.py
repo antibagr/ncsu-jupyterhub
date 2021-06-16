@@ -111,7 +111,7 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(
 
         return JsonDict({
                 'id': course['id'],
-                'course_id': course['shortname'],
+                'course_id': cls.format_string(course['shortname']),
                 'title': course['displayname'],
                 'category': course['categoryid'],
                 'instructors': [],

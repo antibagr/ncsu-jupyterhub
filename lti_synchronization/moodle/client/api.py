@@ -16,6 +16,14 @@ from moodle.utils import log_load_data, JsonDict
 class MoodleClient(BaseAPIClient):
     '''Client for fetch the data from the Moodle LMS.
 
+    Mainly used to generate JSON file from Moodle courses and users REST
+    responses, but also can be used to low-level API calls
+    (see moodle.client.base.BaseAPIClient for low-level details)
+
+    It's important to note that reading documentation before using the client
+    in the production enviroment is highly encouraged, because of its flexible
+    mechanism to determine which course should use Jupyterhub and / or nbgrader.
+
     Attributes:
         functions:
             Tuple of functions need to be enabled in
@@ -33,8 +41,6 @@ class MoodleClient(BaseAPIClient):
 
     users: t.Dict[str, User]
 
-    cats: t.Tuple[int, int]
-
     def __init__(self, *args: t.Any, **kwargs: t.Any):
 
         super().__init__(*args, **kwargs)
@@ -42,7 +48,7 @@ class MoodleClient(BaseAPIClient):
         self.helper = MoodleDataHelper()
         self.courses = []
         self.users = {}
-        self.cats = ()
+        self._cats = ()
         self._use_categories = False
 
     def _get_users(self, course: Course) -> t.Generator[User, None, None]:
@@ -141,7 +147,7 @@ class MoodleClient(BaseAPIClient):
             raise EnvironmentError('MOODLE_NBGRADER_CATEGORY_ID is not set.')
 
         try:
-            self.cats = (int(env_jupyterhub), int(env_nbgrader))
+            self._cats = (int(env_jupyterhub), int(env_nbgrader))
         except ValueError:
             raise ValueError('MOODLE_JUPYTERHUB_CATEGORY_ID and '
                              'MOODLE_NBGRADER_CATEGORY_ID should be integers, representing '
@@ -221,7 +227,7 @@ class MoodleClient(BaseAPIClient):
 
         for course in self._get_courses():
 
-            if self._use_categories and course.category not in self.cats:
+            if self._use_categories and course.category not in self._cats:
                 continue
 
             if _skip_course(course):
@@ -231,9 +237,16 @@ class MoodleClient(BaseAPIClient):
 
     @log_load_data('users')
     def load_users(self) -> None:
-        '''
-        Load users from every course and transform data to convinience format.
-        Store users to course's group and self.users.
+        '''Iterates through self.courses and fetches users from that courses.
+
+        We've got a lot of information about users from Moodle, but we don't
+        need so much in Jupyterhub. To make it compact and helpful, we
+        fetch users iteratively and find the role with the highest rank for
+        every user (see moodle.client.helper.MoodleDataHelper for details)
+
+        After the method called, users stores into courses' groups respectively
+        to users' roles.
+
         '''
 
         for course in self.courses:
@@ -255,11 +268,17 @@ class MoodleClient(BaseAPIClient):
                     course[group].append(user)
 
     def download_json(self, json_path: t.Optional[PathLike] = None) -> None:
-        '''
-        Top-level method to load courses,
-        load users from every course,
-        transform them, and then
-        store them to json file.
+        '''Download formatted course data from Moodle as JSON.
+
+        Before you hit this method, make sure to read about filtering courses
+        in moodle.client.api.MoodleClient.load_courses method documentation,
+        category filtering in moodle.client.api.MoodleClient.use_categories
+        documentation, and user role resolving method in
+        moodle.client.helper.MoodleDataHelper class documentation.
+
+        Args:
+            json_path (t.Optional[PathLike]):
+                Path to JSON to be used over the default. Defaults to None.
         '''
 
         with suppress(KeyboardInterrupt):
@@ -268,6 +287,13 @@ class MoodleClient(BaseAPIClient):
 
             self.load_users()
 
-            FileWorker(json_path).save_json(self.courses)
+            try:
+                FileWorker(json_path).save_json(self.courses)
+
+            except OSError as exc:
+
+                logger.exception(f'Failed to store JSON. Reason: {exc}')
+
+                raise exc
 
             logger.info('Successfully update json')

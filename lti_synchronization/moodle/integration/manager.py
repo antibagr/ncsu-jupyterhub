@@ -72,13 +72,21 @@ class SyncManager:
         self.services = []
 
     def update_services(self, course_id: str, port: int = 0) -> None:
-        '''
-        Generate new service token. Add new token to self.tokens
-        And generate new service with such token.
+        '''Add new Jupyterhub service to data.
+
+        We don't interact with OS or API there, rather create a dictionary
+        filled with course specific data which will be passed into c.Services
+        in the jupyterhub_config file. To communicate with services, Jupyterhub
+        uses tokens which are randomly generated strings. To allow services
+        talk back to Jupyterhub, we need to map these tokens to services' names
+        in the configuration file as well.
+
+        Notice that port argument is the offset from 9000. So if you pass
+        1, the port would be 9001
 
         Args:
             course_id (str): Normalized course name.
-            port (int): A Port that service should take. Defaults to 0.
+            port (int): A Port offset that service should take. Defaults to 0.
         '''
 
         service_token = token_hex(32)
@@ -98,15 +106,21 @@ class SyncManager:
             course (Course): Target course.
         '''
 
-        self.admin_users.update(x['username'] for x in course['instructors'])
-        self.admin_users.add(grader / course['short_name'])
+        self.admin_users.update(user.username for user in course.instructors)
+        self.admin_users.add(grader / course.course_id)
 
     def create_grader(self, course_id: str) -> None:
-        '''
-        Create new UNIX user with appropriate directories.
-        Write nbgrader_config files in home and course's root dirs.
-        Change owner of these files to a grader and set Readonly permissions.
-        Enable all nbgrader extensions for the grader.
+        '''Create daemon user for hosting a course server.
+
+        Here we have some low-level OS operations. A lot of errors occur
+        because nbgrader heavily relate on file hierarchy and file permissions.
+
+        To launch new service properly, a user should exist on the system.
+        Then you need to create several directories and write nbgrader_config
+        which will point to the course source files location. With this done,
+        we need to set appropriate permissions to database file and course
+        directories and enable nbgrader extensions, since only instructors and
+        graders can login to the service.
 
         Args:
             course_id (str): Normalized course name.
@@ -124,7 +138,8 @@ class SyncManager:
 
         self.temp.write_grader_config(course_id)
 
-        system.chown(course_grader, jupyter, course_dir / 'source', course_dir, group=course_grader)
+        system.chown(course_grader, jupyter, course_dir
+                     / 'source', course_dir, group=course_grader)
 
         system.enable_nbgrader(course_grader)
 
@@ -140,12 +155,12 @@ class SyncManager:
 
         '''
 
-        graders_group = f'formgrade-{course["short_name"]}'
-        students_group = f'nbgrader-{course["short_name"]}'
+        graders_group = f'formgrade-{course.course_id}'
+        students_group = f'nbgrader-{course.course_id}'
 
-        for user in course['instructors'] + course['graders'] + course['students']:
+        for user in course.instructors + course.graders + course.students:
 
-            username: str = user['username']
+            username: str = user.username
 
             group: str = self.helper.get_user_group(user)
 
@@ -159,62 +174,95 @@ class SyncManager:
 
                 self.groups[students_group].append(username)
 
-                self.helper.add_student(course['short_name'], user)
+                self.helper.add_student(course.course_id, user)
 
             system.create_user(username)
 
-    def load_course(self, course: Course) -> None:
-        '''
-        Create course's service, add course instructors as admin users.
-        Create course's groups and add users to them.
+    def process_course(self, course: Course) -> None:
+        '''Process data neccesary to configure Jupyterhub, interacts with OS.
+
+        Let's assume we have one new course in JSON called 'foo'
+
+        To set up new course in the nbgrader, couple of conditions should be
+        satisfied.
+
+            New service should be created:
+                In order to allow multiple users to work on the same files
+                simultaniously, we need to create new Jupyterhub service,
+                generate API token and create daemon user to host it. After
+                re-deploying, grades will be able to access this service via
+                services menu in Jupyterhub.
+
+            Read more about Jupyterhub services:
+                https://jupyterhub.readthedocs.io/en/stable/reference/services.html
+
+            Two Jupyterhub groups should be created:
+                'formgrade-foo' for instructors, graders, and teachers
+                'nbgrader-foo' for students to access the course.
+
+            Deamon user called 'foo-grader' to host the service
+
+            Add all enrolled users to whitelist, since all login attemts from
+            users that's not in the whitelist will be blocked
+
+            Add instructors to admin user list
+
+            Create UNIX users to all enrolled participant
+
+            Read more about Jupyterhub user management:
+                https://jupyterhub.readthedocs.io/en/stable/getting-started/authenticators-users-basics.html
+
+
+        Since there is no way to generate new service programmaticaly,
+        we need to update jupyterhub_config file and restart hub for the
+        changes to apply. That's because synchronize must be initiate from
+        outside of the Jupyterhub container.
 
         Args:
-            course (Course): Target course
+            course (Course): Course to process.
         '''
 
-        course_id: str = self.helper.format_string(course['short_name'])
-
-        self.update_services(course_id, self.courses.index(course))
+        self.update_services(course.course_id, self.courses.index(course))
 
         self.update_admins(course)
 
         self.groups.update({
-                f'formgrade-{course_id}': [grader / course_id, ],
-                f'nbgrader-{course_id}': [],
+                f'formgrade-{course.course_id}': [grader / course.course_id, ],
+                f'nbgrader-{course.course_id}': [],
         })
 
-        self.create_grader(course_id)
+        self.create_grader(course.course_id)
 
-        self.whitelist.add(grader / course_id)
+        self.whitelist.add(grader / course.course_id)
 
         self.add_users(course)
 
-    def load_data(self) -> None:
+    def process_data(self, json_path: t.Optional[PathLike] = None) -> None:
+        '''Iterates through JSON file and calls self.process_course for
+        every course found in a file.
+
+        Args:
+            json_path (t.Optional[PathLike]):
+                Custom path to JSON. Defaults to None.
         '''
-        Read data fetched from Moodle and load courses into self.
-        '''
 
-        _titles = []
+        courses = (JsonDict(crs) for crs in FileWorker(json_path).load_json())
 
-        for raw_course in FileWorker().load_json():
+        for course in courses:
 
-            course = JsonDict(raw_course)
+            logger.debug(f'Processing coure {course.title!r}')
 
             self.courses.append(course)
 
-            _titles.append(course.title)
-
-        logger.debug(f'{len(_titles)} courses found: {", ".join(_titles)}')
-
-        for course in self.courses:
-
-            self.load_course(course)
+            self.process_course(course)
 
     def update_jupyterhub(
-            self,
-            in_file: t.Optional[PathLike] = None,
-            out_file: t.Optional[PathLike] = None,
-        ) -> None:
+                self,
+                *,
+                json_path: t.Optional[PathLike] = None,
+                in_file: t.Optional[PathLike] = None,
+                out_file: t.Optional[PathLike] = None,
+            ) -> None:
         '''Updates jupyterhub_config file with data received from Moodle LMS.
 
         After calling moodle.client.api.MoodleClient.download_json method,
@@ -223,19 +271,19 @@ class SyncManager:
         about courses and enrolled users.
 
         Args:
+            json_path (t.Optional[PathLike]):
+                JSON source file path if it differs from default. Defaults to None
             in_file (t.Optional[PathLike]):
-                Pass template file if it differs from default. Defaults to None
+                template file if it differs from default. Defaults to None
             out_file (t.Optional[PathLike]):
-                Pass jupyterhub_config location if it differs from default.
-                Defaults to None.
+                jupyterhub_config location if it differs from default. Defaults to None.
         '''
 
         with suppress(KeyboardInterrupt):
 
-            default_config: str = self.temp.get_default_jupyterhub_config(
-                in_file or self.path.in_file)
+            default_config: str = self.temp.get_default(in_file or self.path.in_file)
 
-            self.load_data()
+            self.process_data(json_path)
 
             self.temp.update_jupyterhub_config(
                 out_file or self.path.out_file,

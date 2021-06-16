@@ -1,6 +1,6 @@
 class Config(object):
     '''
-    Storage for the configuration templates.
+    Storage for the configuration presets.
     '''
 
     home_config: str = '''

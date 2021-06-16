@@ -164,6 +164,14 @@ def test_use_category_env(get_client: t.Callable[[], MoodleClient], setenv_categ
 
         mock_getenv.assert_not_called()
 
+    setenv_category('1', '2')
+
+    client = get_client()
+
+    client.use_categories()
+
+    assert client._cats == (1, 2)
+
 
 def test_get_categories(client: MoodleClient):
     '''
@@ -228,10 +236,10 @@ def test_filter_courses(client: MoodleClient):
         assert client.courses == [courses[0]]
 
         # Empty sequence is not allowed
-
         with pytest.raises(ValueError):
             client.load_courses(title=(), course_id='baz')
 
+        # Invalid key for the course
         with pytest.raises(KeyError):
             client.load_courses(foo='bar')
 
@@ -243,8 +251,6 @@ def test_filter_categories(client: MoodleClient, setenv_category: t.Callable):
 
     setenv_category('1', '2')
 
-    client.use_categories()
-
     with patch.object(client, '_get_courses') as get_courses:
 
         courses = get_courses.return_value = [
@@ -253,6 +259,8 @@ def test_filter_categories(client: MoodleClient, setenv_category: t.Callable):
             JsonDict(course_id='baz', category=5),
             JsonDict(course_id='spam', category=10),
         ]
+
+        client.use_categories()
 
         client.load_courses()
 
