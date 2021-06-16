@@ -7,13 +7,9 @@ from moodle.utils import JsonDict, grader
 from nbgrader.api import Assignment, Gradebook, InvalidEntry
 from nbgrader.api import Course as NBCourse
 from custom_inherit import DocInheritMeta
-# from traitlets.config import LoggingConfigurable
 
 
-class MoodleBasicHelper(metaclass=DocInheritMeta(
-            style='google_with_merge',
-            include_special_methods=True
-        )):
+class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', include_special_methods=True)):
 
     @classmethod
     def format_string(cls, string: str) -> str:
@@ -135,10 +131,48 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(
             'id': user['id'],
             'first_name': user['firstname'],
             'last_name': user['lastname'],
-            'username': user['username'],
+            'username': cls.format_string(user['username']),
             'email': user['email'],
             'roles': [role['shortname'] for role in user['roles']],
         })
+
+    @classmethod
+    def skip_course(
+                cls,
+                course: Course,
+                filters: t.Dict[str, t.Union[t.Sequence[t.AnyStr], t.AnyStr]],
+            ) -> bool:
+        '''Determines should the course be skipped according to provided filters
+
+        Args:
+            course (Course): Course created by calling format_course method.
+            filters (t.Dict[str, t.Union[t.Sequence[t.AnyStr], t.AnyStr]]):
+                key-value pairs where value can be both single value or list
+                of valid items.
+
+        Returns:
+            bool: True if the course failed filters check. False otherwise.
+
+        '''
+
+        for field, value in filters.items():
+
+            # if provided filter is a sequence
+            # check that course's value is in that sequence
+            if not isinstance(value, str) and hasattr(type(value), '__iter__'):
+
+                if not value:
+                    raise ValueError(f'Empty sequence found: {field}')
+
+                if course[field] not in value:
+                    return True
+
+            else:
+
+                if course[field] != value:
+                    return True
+
+        return False
 
 
 class NBGraderHelper(MoodleBasicHelper):
@@ -153,7 +187,8 @@ class NBGraderHelper(MoodleBasicHelper):
 
         self._dbs = {}
 
-    def _get_db(self, course_id: str) -> Gradebook:
+    @classmethod
+    def _get_db(cls, course_id: str) -> Gradebook:
         '''
         Create new connection to sqlite database.
         '''

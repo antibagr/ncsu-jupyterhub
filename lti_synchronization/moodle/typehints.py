@@ -21,8 +21,6 @@ import os
 import pathlib
 import typing as t
 
-from .settings import ROLES
-
 
 Serializable = t.Union[str, int, float, bool, None]
 
@@ -74,4 +72,10 @@ Alias for Dict[Hashable, List[bytes]]
 Dirs = t.Tuple[PathLike, ...]
 '''
 Tuple of PathLike objects
+'''
+
+Filters = t.Dict[str, t.Union[t.Sequence[t.AnyStr], t.AnyStr]]
+'''
+key-value dictionary where value can be both single value or list
+of valid items, and key should be presented in a Course.
 '''

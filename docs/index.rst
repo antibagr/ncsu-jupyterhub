@@ -1,8 +1,12 @@
-# Create REST API service
+Jupyterhub LMS synchronization
+==============================
 
-Follow steps described in the link below to create REST API service:
+Create REST API service
+-----------------------
 
-https://<your_moodle_domain>.com/admin/category.php?category=webservicesettings
+Follow steps described in the link below to create *REST API* service:
+
+`https://<your_moodle_domain>.com/admin/category.php?category=webservicesettings`
 
 Enable REST protocol, create specific user to access your moodle API.
 Login as this user and agree with Moodle Policy.
@@ -17,20 +21,25 @@ Site administration / Plugins / Web services / External services / Functions
 
 Create a token for REST API user. Paste it to .env file as follow:
 
-MOODLE_REST_API_TOKEN=<generated_token>
+.. code-block::
 
-Check that Moodle is published as LTI Tool
+  MOODLE_REST_API_TOKEN=TOKEN
 
-https://docs.moodle.org/311/en/Publish_as_LTI_tool
 
-=======================================================
+Ensure that the Moodle instance is `published as LTI Tool`_
+
+
 .. automodule:: lti_synchronization.moodle
     :members:
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
 Indices and tables
 ==================
+
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. _published as LTI Tool: https://docs.moodle.org/311/en/Publish_as_LTI_tool

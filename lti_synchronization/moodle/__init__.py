@@ -13,5 +13,6 @@ sys.path.append(os.path.join(base_dir, 'moodle'))
 
 from .client.api import MoodleClient
 from .integration.manager import SyncManager
+from .sync import synchronize
 
-__all__ = ['MoodleClient', 'SyncManager', ]
+__all__ = ['MoodleClient', 'SyncManager', 'synchronize']

@@ -5,7 +5,9 @@ import typing as t
 from functools import wraps
 
 from loguru import logger
-from .typehints import JsonType
+
+from .settings import JSON_FILE
+from .typehints import JsonType, PathLike
 
 
 def dump_json(dict_in: JsonType) -> str:
@@ -103,3 +105,43 @@ class JsonDict(dict):
             del self[key]
         else:
             super().__delattr__(str(key))
+
+
+def save_moodle_courses(courses: JsonType, filename: t.Optional[PathLike] = None) -> None:
+    '''Saves downloaded formatted courses to a json file.
+
+    To make lti_synchronization package more configurable, we added two ways of
+    synchronize data between Jupyterhub and Moodle. You can call synchronize
+    function from the package or use MoodleClient and SyncManager separately.
+
+    If you would like just to store courses somewhere so you can modify or inspect
+    the data you receive from Moodle, this function would call to create json file.
+
+    Args:
+        data (JsonType): Data to be saved in json.
+        filename (t.Optional[PathLike]): Path to json file. Defaults to None.
+    '''
+
+    with open(filename or JSON_FILE, 'w') as f:
+
+        f.write(dump_json(courses))
+
+
+def load_moodle_courses(filename: t.Optional[PathLike] = None) -> JsonType:
+    '''Loads courses that were saved into a json file.
+
+    Note:
+        Does not transform courses into JsonDict instance, rather returns
+        regular json instance.
+
+    Args:
+        filename (t.Optional[PathLike]): Path to json file. Defaults to None.
+
+    Returns:
+        JsonType: Courses from the json file.
+
+    '''
+
+    with open(filename or JSON_FILE, 'r') as f:
+
+        return json.loads(f.read())

@@ -120,6 +120,10 @@ class BaseAPIClient(metaclass=DocInheritMeta(style='google_with_merge', include_
         '''
         Calls Moodle API <api_func> with keyword arguments.
 
+        Args:
+            api_func (:obj:`str`): name of function in Moodle web client.
+            **kwargs: any parameters to send with the request.
+
         Examples:
 
             Calling *core_course_update_courses* function::
@@ -129,18 +133,20 @@ class BaseAPIClient(metaclass=DocInheritMeta(style='google_with_merge', include_
                     courses = [{'id': 1, 'fullname': 'My favorite course'}]
                 )
 
+        Returns:
+            FluidResponse: Convinient wrapper for received data.
+
+
         Raises:
+            requests.HTTPError: Network or server error
             MoodleHTTPException: non successful HTTP status.
             MoodleAPIException: Syntax error in API call.
         '''
 
-        # helpful while configuring mock
-        # raise Exception('should not call on tests!')
-
         parameters = self.rest_api_parameters(kwargs)
 
         logger.debug(f'''
-        Calling "{api_func}"
+        Calling {api_func!r}
 
         {dump_json(parameters)[1:-1] or 'Without parameters'}
         '''

@@ -6,7 +6,7 @@ from tornado.httpclient import AsyncHTTPClient, HTTPResponse
 from tornado.httputil import HTTPHeaders
 from tornado.web import RequestHandler
 
-from moodle.grades.errors import AssignmentWithoutGradesError, GradesSenderMissingInfoError
+from moodle.errors import AssignmentWithoutGradesError, GradesSenderMissingInfoError
 from moodle.grades.senders import LTI13GradeSender
 
 

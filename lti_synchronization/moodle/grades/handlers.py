@@ -1,6 +1,6 @@
 import json
 
-from . import errors
+from moodle import errors
 from .senders import LTI13GradeSender
 from tornado import web
 

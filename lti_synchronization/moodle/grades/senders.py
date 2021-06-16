@@ -5,15 +5,15 @@ import typing as t
 from datetime import datetime
 
 from loguru import logger
-
 from custom_inherit import DocInheritMeta
-from moodle.helper import NBGraderHelper
-from .errors import (AssignmentWithoutGradesError,
-                     GradesSenderCriticalError, GradesSenderMissingInfoError)
-from moodle.lti13.auth import get_lms_access_token
-
-from nbgrader.api import Course, Gradebook, MissingEntry
 from tornado.httpclient import AsyncHTTPClient
+from nbgrader.api import Course, Gradebook, MissingEntry
+
+from moodle.helper import NBGraderHelper
+from moodle.errors import (AssignmentWithoutGradesError,
+                            GradesSenderCriticalError,
+                            GradesSenderMissingInfoError)
+from moodle.lti13.auth import get_lms_access_token
 
 
 class GradesBaseSender(metaclass=DocInheritMeta(style='google_with_merge', include_special_methods=True)):

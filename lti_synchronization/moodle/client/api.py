@@ -1,16 +1,15 @@
 import os
-from pprint import pprint
 import typing as t
 from contextlib import suppress
 
 from loguru import logger
 from moodle.client.base import BaseAPIClient
 from moodle.client.helper import MoodleDataHelper
-from moodle.file_worker import FileWorker
+from moodle.utils import save_moodle_courses
 from moodle.response import FluidResponse
 from moodle.settings import ROLES
-from moodle.typehints import Course, PathLike, User
-from moodle.utils import log_load_data, JsonDict
+from moodle.typehints import Course, PathLike, User, Filters
+from moodle.utils import log_load_data
 
 
 class MoodleClient(BaseAPIClient):
@@ -55,12 +54,10 @@ class MoodleClient(BaseAPIClient):
         '''Fetches users from a course and creates generator with them.
 
         Args:
-            course (Course):
-                Object with 'title' and 'id' attributes.
+            course: Object with 'title' and 'id' attributes.
 
         Returns:
-            t.Generator[User, None, None]:
-                Generator with formatted users.
+            Generator with formatted users.
 
         '''
 
@@ -78,7 +75,7 @@ class MoodleClient(BaseAPIClient):
         '''Fetches all courses from Moodle and creates generator with them.
 
         Returns:
-            t.Generator[Course, None, None]: Generator with formatted courses.
+            Generator with formatted courses.
 
         '''
 
@@ -94,14 +91,12 @@ class MoodleClient(BaseAPIClient):
         It intends to make it easier to determine which id is assigned to
         'use jupyterhub' and 'use jupyterhub and nbgrader' categories. Since
         there is no way to set the category id manually. After you got the
-        necessary id, put it to the environment variable (see use_categories
+        necessary id, put it to the environment variable (see ``use_categories``
         property documentation for information on how to set up working with
         categories)
 
         Returns:
-            t.List[t.Tuple[str, str, str]]:
-                list where every course is represented as a tuple of title,
-                short name, and category id.
+            list where every course is represented as a tuple of title, short name, and category id.
 
         '''
 
@@ -116,17 +111,17 @@ class MoodleClient(BaseAPIClient):
     def use_categories(self) -> None:
         '''Forces the client to filter courses by category.
 
-        If you call use_categories before fetching courses, we determine which
+        If you call `use_categories` before fetching courses, we determine which
         course the client would add to Jupyterhub depends on categories ids.
 
         You need to create two categories in Moodle for courses that use only
         Jupyterhub and which use both nbgrader and Jupyterhub.  Then set the
-        appropriate category to courses and call 'get_categories' method to
+        appropriate category to courses and call `get_categories` method to
         show you course name and its category id. It's the only way to track
         category id since we can't set it manually.
 
-        Then set environment variables MOODLE_JUPYTERHUB_CATEGORY_ID and
-        MOODLE_NBGRADER_CATEGORY_ID with values you've received from Moodle.
+        Then set environment variables ``MOODLE_JUPYTERHUB_CATEGORY_ID`` and
+        ``MOODLE_NBGRADER_CATEGORY_ID`` with values you've received from Moodle.
 
         Raises:
             EnvironmentError:
@@ -155,7 +150,7 @@ class MoodleClient(BaseAPIClient):
                              'get_categories method.')
 
     @log_load_data('courses')
-    def load_courses(self, **filters) -> None:
+    def load_courses(self, **filters: Filters) -> None:
         '''Store courses from Moodle to self.courses
 
         There is two ways to select only courses that needs Jupyterhub
@@ -164,11 +159,11 @@ class MoodleClient(BaseAPIClient):
         First one is to use category id as a filter. In this case, call
         client.use_categories() once before calling any other method. The client
         will check if the course's category id equals either
-        MOODLE_JUPYTERHUB_CATEGORY_ID or MOODLE_NBGRADER_CATEGORY_ID and will
-        skip the course otherwise.
+        ``MOODLE_JUPYTERHUB_CATEGORY_ID`` or ``MOODLE_NBGRADER_CATEGORY_ID`` and
+        will skip the course otherwise.
 
         Second option is to filter by course id, title, short_name or any other
-        field available (see moodle.client.helper.MoodleDataHelper.format_course)
+        field available (see ``moodle.client.helper.MoodleDataHelper.format_course``)
 
         If this behavior is disired, pass filters as keywords arguments.
 
@@ -191,36 +186,10 @@ class MoodleClient(BaseAPIClient):
             the courses that already were filtered by categories.
 
         Args:
-            **filters (type): .
-
-        Returns:
-            None: .
-
+            **filters:
+                key-value pairs where value can be both single value or list
+                of valid items.
         '''
-
-        def _skip_course(course) -> bool:
-            '''
-            Determine should the course be skipped according to provided filters
-            '''
-
-            for field, value in filters.items():
-
-                # if provided filter is a sequence
-                # check that course's value is in that sequence
-                if not isinstance(value, str) and hasattr(type(value), '__iter__'):
-
-                    if not value:
-                        raise ValueError(f'Empty sequence found: {field}')
-
-                    if course[field] not in value:
-                        return True
-
-                else:
-
-                    if course[field] != value:
-                        return True
-
-            return False
 
         if self._use_categories:
             logger.info('Using category id to filter courses.')
@@ -230,7 +199,7 @@ class MoodleClient(BaseAPIClient):
             if self._use_categories and course.category not in self._cats:
                 continue
 
-            if _skip_course(course):
+            if self.helper.skip_course(course, filters):
                 continue
 
             self.courses.append(course)
@@ -267,8 +236,14 @@ class MoodleClient(BaseAPIClient):
 
                     course[group].append(user)
 
-    def download_json(self, json_path: t.Optional[PathLike] = None) -> None:
-        '''Download formatted course data from Moodle as JSON.
+    def fetch_courses(
+            self,
+            *,
+            json_path: t.Optional[PathLike] = None,
+            save_on_disk: bool = True,
+            **filters: Filters,
+        ) -> None:
+        '''Download formatted course data from Moodle.
 
         Before you hit this method, make sure to read about filtering courses
         in moodle.client.api.MoodleClient.load_courses method documentation,
@@ -276,24 +251,40 @@ class MoodleClient(BaseAPIClient):
         documentation, and user role resolving method in
         moodle.client.helper.MoodleDataHelper class documentation.
 
+        If you want to pass courses directorly to the manager, pass save_on_disk
+        keyword argument set to False.
+
         Args:
-            json_path (t.Optional[PathLike]):
-                Path to JSON to be used over the default. Defaults to None.
+            json_path:
+                Path to json file to be used over the default. Defaults to None.
+            save_on_disk:
+                If set to False, courses will not be saved to json file.
+                Defaults to True.
+            **filters:
+                key-value pairs where value can be both single value or list
+                of valid items.
         '''
 
         with suppress(KeyboardInterrupt):
 
-            self.load_courses()
+            self.load_courses(**filters)
 
             self.load_users()
 
+            logger.info('Processing data is completed.')
+
+            if not save_on_disk:
+
+                return
+
             try:
-                FileWorker(json_path).save_json(self.courses)
+
+                save_moodle_courses(self.courses, json_path)
+
+                logger.info('Successfully update json with data from Moodle.')
 
             except OSError as exc:
 
-                logger.exception(f'Failed to store JSON. Reason: {exc}')
+                logger.exception(f'Failed to update json. Reason: {exc}')
 
                 raise exc
-
-            logger.info('Successfully update json')
