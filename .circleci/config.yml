@@ -39,6 +39,6 @@ jobs:
           name: Run tests
           working_directory:  ~/project/lti_synchronization/
           # This assumes pytest is installed via the install-package step above
-          command: pytest
+          command: mkdir ~/project/test_results & pytest --resultlog=~/project/test_results
       - store_test_results:
           path: test-results
