@@ -5,12 +5,20 @@ FROM jupyterhub/jupyterhub:latest
 
 WORKDIR /srv/jupyterhub
 
+
+# Update package list in order
+# To install several Ubuntu utils.
+
+RUN apt-get update && apt-get install nano bash sudo -yq && rm -rf /var/lib/apt/lists/*
+
+
 # Install python dependencies
 
 COPY requirements.prod.txt requirements.txt
 
 RUN python3 -m pip install --upgrade pip \
   && python3 -m pip install -r requirements.txt --no-cache-dir
+
 
 # Install nbgrader system-wide
 # Enable only assignment_list by default for any user.
@@ -28,10 +36,6 @@ RUN mkdir -p /srv/nbgrader/exchange && \
     mkdir -p /etc/jupyter && \
     chmod ugo+rw /etc/jupyter
 
-# Update package list in order
-# To install several Ubuntu utils.
-
-RUN apt-get update && apt-get install nano bash sudo -yq && rm -rf /var/lib/apt/lists/*
 
 # Copy default jupyterhub configuration
 
