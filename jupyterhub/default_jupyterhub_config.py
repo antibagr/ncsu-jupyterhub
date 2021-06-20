@@ -47,7 +47,7 @@ c.JupyterHub.ssl_key = '/srv/jupyterhub/ssc_jhub.key'
 
 BASE_DIR: str = '/srv/jupyterhub'
 
-MODULE_NAME: str = 'lti_synchronization.moodle'
+MODULE_NAME: str = 'moodle'
 
 # ---------------
 # AUTHENTICAION

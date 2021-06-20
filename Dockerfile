@@ -39,4 +39,8 @@ RUN mkdir -p /srv/nbgrader/exchange && \
 
 # Copy default jupyterhub configuration
 
-COPY default_jupyterhub_config jupyterhub_config.py
+COPY jupyterhub/default_jupyterhub_config.py jupyterhub_config.py
+
+COPY lti_synchronization lti_synchronization
+
+RUN python3.8 lti_synchronization/setup.py install
