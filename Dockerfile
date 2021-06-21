@@ -9,7 +9,7 @@ WORKDIR /srv/jupyterhub
 # Update package list in order
 # To install several Ubuntu utils.
 
-RUN apt-get update && apt-get install nano bash sudo -yq && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install git nano bash sudo -yq && rm -rf /var/lib/apt/lists/*
 
 
 # Install python dependencies
@@ -18,7 +18,7 @@ COPY requirements.prod.txt requirements.txt
 
 RUN python3 -m pip install --upgrade pip \
   && python3 -m pip install -r requirements.txt --no-cache-dir
-
+				
 
 # Install nbgrader system-wide
 # Enable only assignment_list by default for any user.
@@ -41,6 +41,8 @@ RUN mkdir -p /srv/nbgrader/exchange && \
 
 COPY jupyterhub/default_jupyterhub_config.py jupyterhub_config.py
 
-COPY lti_synchronization lti_synchronization
+COPY ./lti_synchronization/ lti_synchronization/
 
-RUN python3.8 lti_synchronization/setup.py install
+RUN cd lti_synchronization && python3.8 setup.py install && python3 setup.py install
+
+COPY lti_synchronization /usr/local/lib/python3.8/dist-packages/lti_synchronization

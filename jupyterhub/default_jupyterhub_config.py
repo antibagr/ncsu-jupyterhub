@@ -4,14 +4,11 @@ import platform
 import pwd
 import subprocess
 from os import path
-from unittest.mock import MagicMock
+import sys
+
+from lti_synchronization import LTI13Authenticator
 
 from jupyterhub.spawner import LocalProcessSpawner
-
-# mocking c variable while
-# editing the file to turn off linter.
-if os.getenv('DEBUG', True):
-    c = MagicMock()
 
 # ---------------
 # IP
@@ -47,13 +44,13 @@ c.JupyterHub.ssl_key = '/srv/jupyterhub/ssc_jhub.key'
 
 BASE_DIR: str = '/srv/jupyterhub'
 
-MODULE_NAME: str = 'moodle'
+MODULE_NAME: str = 'lti_synchronization.moodle'
 
 # ---------------
 # AUTHENTICAION
 # ---------------
 
-c.JupyterHub.authenticator_class = f'{MODULE_NAME}.authenticators.authenticator.LTI13Authenticator'
+c.JupyterHub.authenticator_class = 'lti_synchronization.LTI13Authenticator'
 
 c.LTI13Authenticator.endpoint = os.environ.get(
     'LTI13_ENDPOINT',
@@ -73,10 +70,10 @@ c.LTI13Authenticator.token_url = os.environ.get(
 )
 
 c.JupyterHub.extra_handlers = [
-  (r'/lti13/config$', f'{MODULE_NAME}.handlers.LTI13ConfigHandler'),
+  (r'/lti13/config$', f'{MODULE_NAME}.lti13.handlers.LTI13ConfigHandler'),
   (r'/lti13/jwks$', f'{MODULE_NAME}.lti13.handlers.LTI13JWKSHandler'),
   (r'/submit-grades/(?P<course_id>\w+)/(?P<assignment_name>\w+)',
-   f'{MODULE_NAME}.grades.SendGradesHandler'),
+   f'{MODULE_NAME}.grades.handlers.SendGradesHandler'),
 ]
 
 c.Authenticator.enable_auth_state = True

@@ -12,7 +12,7 @@ services:
 
     volumes:
       # Mount python library
-      - ./lti_synchronization:/srv/jupyterhub/lti_synchronization
+#      - ./lti_synchronization:/srv/jupyterhub/lti_synchronization
 
       # Mount folders to copy backups to
       - ./misc/backup:/backup
