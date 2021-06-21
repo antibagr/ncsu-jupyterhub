@@ -22,14 +22,8 @@ class LTI13LoginHandler(OAuthLoginHandler):
     LTI 1.3 standard.
     '''
 
-    log = logger if os.getenv('DEBUG', 'True') == 'True' else None
-
-    # def __init__(self, *args: t.Any, **kwargs: t.Any):
-    #
-    #     super().__init__(*args, **kwargs)
-    #
-    #     if os.getenv('DEBUG', 'True') == 'True':
-    #         self.log = logger
+    if os.getenv('DEBUG', 'True') == 'True':
+        log = logger
 
     def authorize_redirect(
         self,
