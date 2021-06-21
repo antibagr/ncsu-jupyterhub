@@ -8,6 +8,7 @@ from moodle.authentication.validator import LTI13LaunchValidator
 from moodle.authentication.helper import LTIHelper
 from moodle.typehints import JsonType
 from oauthenticator.oauth2 import OAuthenticator
+from jupyterhub.utils import url_path_join
 from tornado.web import HTTPError
 from traitlets import Unicode
 
@@ -53,7 +54,12 @@ class LTI13Authenticator(OAuthenticator):
         initial login request.''',
     ).tag(config=True)
 
-    async def authenticate(self, handler: LTI13LoginHandler, *_whatever: t.Any, **__whatever: t.Any) -> JsonType:
+    async def authenticate(
+                self,
+                handler: LTI13LoginHandler,
+                *_whatever: t.Any,
+                **__whatever: t.Any,
+            ) -> JsonType:
         '''
         Overrides authenticate from base class
         to handle LTI 1.3 authentication requests.
@@ -169,3 +175,12 @@ class LTI13Authenticator(OAuthenticator):
                     'launch_return_url': launch_return_url,
                 },
             }
+
+    def get_handlers(self, _app) -> t.List[t.Tuple[str, t.Any]]:
+
+        return [
+            ('/lti/launch', self.login_handler)
+        ]
+
+    def login_url(self, base_url):
+        return url_path_join(base_url, '/lti/launch')
