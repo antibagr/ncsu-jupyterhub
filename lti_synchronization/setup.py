@@ -1,10 +1,14 @@
 import setuptools
+import os
+from pathlib import Path
 
+
+base_dir = Path(__file__).resolve().parent
 # with open("../README.md", "r", encoding="utf-8") as fh:
 long_description = 'Description' # fh.read()
 
 setuptools.setup(
-    name='lti_synchronization',
+    name='ltisync',
     version='1.0.0',
     author="Anton Bagryanov",
     author_email="antibagr@yandex.ru",
@@ -20,7 +24,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: Linux",
     ],
-    package_dir={"": "moodle"},
-    packages=setuptools.find_packages(where="moodle"),
+    package_dir={"": str(base_dir / 'moodle')},
+    packages=setuptools.find_packages(where=str(base_dir / 'moodle')),
     python_requires=">=3.8",
 )

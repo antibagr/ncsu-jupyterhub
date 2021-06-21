@@ -41,17 +41,17 @@ c.JupyterHub.ssl_key = os.getenv('SSL_KEY_PATH', None)
 
 MODULE_NAME: str = 'lti_synchronization.moodle'
 
-DOMAIN: str = 'jhub-dev.cos.ncsu.edu'
+DOMAIN: str = 'https://jhub-dev.cos.ncsu.edu'
 
 # ---------------
 # AUTHENTICAION
 # ---------------
 
-c.JupyterHub.authenticator_class = f'{MODULE_NAME}.lti_synchronization.LTI13Authenticator'
+c.JupyterHub.authenticator_class = f'{MODULE_NAME}.LTI13Authenticator'
 
 c.LTI13Authenticator.endpoint = os.environ.get(
     'LTI13_ENDPOINT',
-    f'{DOMAIN}/lti/security/jwks'
+    f'0.0.0.0:443/hub/lti'
 )
 
 c.LTI13Authenticator.client_id = os.environ.get('LTI13_CLIENT_ID')
@@ -63,7 +63,7 @@ c.LTI13Authenticator.authorize_url = os.environ.get(
 
 c.LTI13Authenticator.token_url = os.environ.get(
     'LTI13_TOKEN_URL',
-    f'{DOMAIN}/llogin/oauth2/token'
+    f'{DOMAIN}/login/oauth2/token'
 )
 
 c.JupyterHub.extra_handlers = [

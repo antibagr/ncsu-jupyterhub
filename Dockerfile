@@ -41,7 +41,7 @@ RUN mkdir -p /srv/nbgrader/exchange && \
 
 COPY lti_synchronization/default_jupyterhub_config.py jupyterhub_config.py
 
-COPY lti_synchronization/ .
+COPY lti_synchronization/ lti_synchronization/
 
 RUN python3 lti_synchronization/setup.py install
 
