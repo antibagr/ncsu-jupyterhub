@@ -18,7 +18,7 @@ COPY requirements.prod.txt requirements.txt
 
 RUN python3 -m pip install --upgrade pip \
   && python3 -m pip install -r requirements.txt --no-cache-dir
-				
+
 
 # Install nbgrader system-wide
 # Enable only assignment_list by default for any user.
@@ -39,10 +39,10 @@ RUN mkdir -p /srv/nbgrader/exchange && \
 
 # Copy default jupyterhub configuration
 
-COPY jupyterhub/default_jupyterhub_config.py jupyterhub_config.py
+COPY lti_synchronization/default_jupyterhub_config.py jupyterhub_config.py
 
-COPY ./lti_synchronization/ lti_synchronization/
+COPY lti_synchronization/ .
 
-RUN cd lti_synchronization && python3.8 setup.py install && python3 setup.py install
+RUN python3 lti_synchronization/setup.py install
 
 COPY lti_synchronization /usr/local/lib/python3.8/dist-packages/lti_synchronization

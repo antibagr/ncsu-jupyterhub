@@ -161,6 +161,10 @@ class SyncManager:
         graders_group: str = f'formgrade-{course.course_id}'
         students_group: str = f'nbgrader-{course.course_id}'
 
+
+        # for student in course_db.students:
+        #     course_db.remove_student(student.id)
+
         for user in course.instructors + course.graders + course.students:
 
             group: str = self.helper.get_user_group(user)

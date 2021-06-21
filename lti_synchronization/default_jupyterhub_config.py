@@ -41,34 +41,36 @@ c.JupyterHub.ssl_key = os.getenv('SSL_KEY_PATH', None)
 
 MODULE_NAME: str = 'lti_synchronization.moodle'
 
+DOMAIN: str = 'jhub-dev.cos.ncsu.edu'
+
 # ---------------
 # AUTHENTICAION
 # ---------------
 
-c.JupyterHub.authenticator_class = f'{MODULE_NAME}.authenticators.authenticator.LTI13Authenticator'
+c.JupyterHub.authenticator_class = f'{MODULE_NAME}.lti_synchronization.LTI13Authenticator'
 
 c.LTI13Authenticator.endpoint = os.environ.get(
     'LTI13_ENDPOINT',
-    'https://illumidesk.instructure.com/api/lti/security/jwks'
+    f'{DOMAIN}/lti/security/jwks'
 )
 
 c.LTI13Authenticator.client_id = os.environ.get('LTI13_CLIENT_ID')
 
 c.LTI13Authenticator.authorize_url = os.environ.get(
     'LTI13_AUTHORIZE_URL',
-    'https://illumidesk.instructure.com/api/lti/authorize_redirect'
+    f'{DOMAIN}/lti/authorize_redirect'
 )
 
 c.LTI13Authenticator.token_url = os.environ.get(
     'LTI13_TOKEN_URL',
-    'https://illumidesk.instructure.com/login/oauth2/token'
+    f'{DOMAIN}/llogin/oauth2/token'
 )
 
 c.JupyterHub.extra_handlers = [
   (r'/lti13/config$', f'{MODULE_NAME}.lti13.handlers.LTI13ConfigHandler'),
   (r'/lti13/jwks$', f'{MODULE_NAME}.lti13.handlers.LTI13JWKSHandler'),
   (r'/submit-grades/(?P<course_id>\w+)/(?P<assignment_name>\w+)',
-   f'{MODULE_NAME}.grades.SendGradesHandler'),
+   f'{MODULE_NAME}.grades.handlers.SendGradesHandler'),
 ]
 
 c.Authenticator.enable_auth_state = True
