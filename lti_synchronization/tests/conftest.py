@@ -13,12 +13,18 @@ from moodle.settings import ROLES
 from moodle.typehints import Course, Role, User
 from moodle.utils import JsonDict
 
+''' HOOKS '''
+
 
 def pytest_sessionfinish(*_):
     asyncio.get_event_loop().close()
 
-def pytest_sessionstart(session):
+
+def pytest_sessionstart():
     load_dotenv()
+
+
+''' UTILS '''
 
 
 def valid_email(email: str) -> bool:
@@ -36,6 +42,9 @@ def make_roles(*role_names: str) -> t.List[Role]:
     return [{'shortname': name} for name in role_names]
 
 
+''' FIXTURES '''
+
+
 @pytest.fixture
 def event_loop():
     yield asyncio.get_event_loop()
@@ -44,8 +53,11 @@ def event_loop():
 @pytest.fixture
 def get_client() -> t.Callable[[], MoodleClient]:
 
-    def _get_client(*args, **kwargs) -> MoodleClient:
-        return MoodleClient(*args, **kwargs)
+    def _get_client(*, url: t.Optional[str] = None, key: t.Optional[str] = None) -> MoodleClient:
+        return MoodleClient(
+            url=url or 'test.moodle.com',
+            key=key or 'some_private_api_key',
+        )
 
     return _get_client
 

@@ -127,9 +127,14 @@ def test_load_users(client: MoodleClient, student: User, teacher: User, course: 
 
 
 @pytest.mark.smoke
-def test_call_real_api(client: MoodleClient):
+def test_call_real_api(get_client: t.Callable[[str, str], MoodleClient]):
 
     with patch('moodle.client.api.save_moodle_courses') as mock_save:
+
+        client = get_client(
+            url=os.getenv('MOODLE_API_URL'),
+            key=os.getenv('MOODLE_API_TOKEN')
+        )
 
         client.fetch_courses(json_path='test_path')
 
