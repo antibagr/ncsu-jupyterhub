@@ -5,6 +5,7 @@ import string
 import typing as t
 
 import pytest
+from dotenv import load_dotenv
 
 from moodle.client.api import MoodleClient
 from moodle.client.helper import MoodleDataHelper
@@ -15,6 +16,9 @@ from moodle.utils import JsonDict
 
 def pytest_sessionfinish(*_):
     asyncio.get_event_loop().close()
+
+def pytest_sessionstart(session):
+    load_dotenv()
 
 
 def valid_email(email: str) -> bool:
@@ -40,11 +44,9 @@ def event_loop():
 @pytest.fixture
 def get_client() -> t.Callable[[], MoodleClient]:
 
-    def _get_client(url: str = None, key: str = None):
-        return MoodleClient(
-            url or 'https://rudie.moodlecloud.com',
-            key or '0461b4a7e65e63921172fa3727f0863c'
-        )
+    def _get_client(*args, **kwargs) -> MoodleClient:
+        return MoodleClient(*args, **kwargs)
+
     return _get_client
 
 

@@ -175,12 +175,3 @@ class LTI13Authenticator(OAuthenticator):
                     'launch_return_url': launch_return_url,
                 },
             }
-
-    def get_handlers(self, _app) -> t.List[t.Tuple[str, t.Any]]:
-
-        return [
-            ('/lti/launch', self.login_handler)
-        ]
-
-    def login_url(self, base_url):
-        return url_path_join(base_url, '/lti/launch')
