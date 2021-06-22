@@ -129,11 +129,11 @@ def test_load_users(client: MoodleClient, student: User, teacher: User, course: 
 @pytest.mark.smoke
 def test_call_real_api(client: MoodleClient):
 
-    with patch('moodle.client.api.FileWorker.save_json') as mocked_json:
+    with patch('moodle.client.api.save_moodle_courses') as mock_save:
 
-        client.sync()
+        client.fetch_courses(json_path='test_path')
 
-        mocked_json.assert_called_once_with(client.courses)
+        mock_save.assert_called_once_with(client.courses, 'test_path')
 
 
 def test_use_category_env(get_client: t.Callable[[], MoodleClient], setenv_category: t.Callable):

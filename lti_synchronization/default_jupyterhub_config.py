@@ -51,7 +51,7 @@ c.JupyterHub.authenticator_class = f'{MODULE_NAME}.LTI13Authenticator'
 
 c.LTI13Authenticator.endpoint = os.environ.get(
     'LTI13_ENDPOINT',
-    '0.0.0.0:443/lti/launch',
+    '0.0.0.0:443/hub/lti/login',
 )
 
 c.LTI13Authenticator.client_id = os.environ.get('LTI13_CLIENT_ID')
