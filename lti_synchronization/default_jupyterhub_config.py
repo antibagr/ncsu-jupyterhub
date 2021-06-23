@@ -47,24 +47,18 @@ DOMAIN: str = 'https://jhub-dev.cos.ncsu.edu'
 # AUTHENTICAION
 # ---------------
 
-c.JupyterHub.authenticator_class = f'{MODULE_NAME}.LTI13Authenticator'
-
-c.LTI13Authenticator.endpoint = os.environ.get(
-    'LTI13_ENDPOINT',
-    '0.0.0.0:443/hub/lti/login',
-)
+c.JupyterHub.authenticator_class = 'lti_synchronization.moodle.LTI13Authenticator'
 
 c.LTI13Authenticator.client_id = os.environ.get('LTI13_CLIENT_ID')
 
-c.LTI13Authenticator.authorize_url = os.environ.get(
-    'LTI13_AUTHORIZE_URL',
-    f'{DOMAIN}/lti/authorize_redirect'
-)
+# 'LTI13_ENDPOINT'
+c.LTI13Authenticator.endpoint = DOMAIN + '/api/lti/jwks'
 
-c.LTI13Authenticator.token_url = os.environ.get(
-    'LTI13_TOKEN_URL',
-    f'{DOMAIN}/login/oauth2/token'
-)
+# 'LTI13_AUTHORIZE_URL'
+c.LTI13Authenticator.authorize_url = DOMAIN + '/api/lti/authorize_redirect'
+
+# 'LTI13_TOKEN_URL',
+c.LTI13Authenticator.token_url = DOMAIN + '/login/oauth2/token'
 
 c.JupyterHub.extra_handlers = [
   (r'/lti13/config$', f'{MODULE_NAME}.lti13.handlers.LTI13ConfigHandler'),

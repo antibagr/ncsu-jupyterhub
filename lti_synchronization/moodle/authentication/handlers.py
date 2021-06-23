@@ -69,7 +69,8 @@ class LTI13LoginHandler(OAuthLoginHandler):
             'prompt': 'none',
         }
 
-        optional: set = {'client_id', 'login_hint', 'lti_message_hint', 'nonce', 'redirect_uri', 'state'}
+        optional: set = {'client_id', 'login_hint',
+                         'lti_message_hint', 'nonce', 'redirect_uri', 'state'}
 
         for arg in optional:
 
@@ -89,9 +90,11 @@ class LTI13LoginHandler(OAuthLoginHandler):
 
             if 'next' in target_link:
 
-                self.log.debug(f'Trying to get the next-url from target_link_uri: {target_link}')
+                self.log.debug(
+                    f'Trying to get the next-url from target_link_uri: {target_link}')
 
-                next_search = re.search('next=(.*)', target_link, re.IGNORECASE)
+                next_search = re.search(
+                    'next=(.*)', target_link, re.IGNORECASE)
 
                 if next_search:
 
@@ -112,10 +115,12 @@ class LTI13LoginHandler(OAuthLoginHandler):
             # force absolute path redirect
             urlinfo = urlparse(next_url)
 
-            next_url = urlinfo._replace(scheme='', netloc='', path='/' + urlinfo.path.lstrip('/')).geturl()
+            next_url = urlinfo._replace(
+                scheme='', netloc='', path='/' + urlinfo.path.lstrip('/')).geturl()
 
             if next_url != original_next_url:
-                self.log.warning('Ignoring next_url %r, using %r', original_next_url, next_url)
+                self.log.warning('Ignoring next_url %r, using %r',
+                                 original_next_url, next_url)
 
         if self._state is None:
 
@@ -153,7 +158,8 @@ class LTI13LoginHandler(OAuthLoginHandler):
 
         args = LTIHelper.convert_request_to_dict(self.request.arguments)
 
-        self.log.debug('Initial login request args are %s' % dump_json({**args, 'lti_message_hint': args['lti_message_hint'][-5:]}))
+        self.log.debug('Initial login request args are %s' % dump_json(
+            {**args, 'lti_message_hint': args['lti_message_hint'][-5:]}))
 
         if validator.validate_login_request(args):
 
@@ -169,7 +175,8 @@ class LTI13LoginHandler(OAuthLoginHandler):
 
             self.log.debug('client_id is %s' % client_id)
 
-            redirect_uri = guess_callback_uri('https', self.request.host, self.hub.server.base_url)
+            redirect_uri = guess_callback_uri(
+                'https', self.request.host, self.hub.server.base_url)
 
             self.log.info('redirect_uri: %s' % redirect_uri)
 
