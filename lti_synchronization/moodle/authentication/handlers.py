@@ -212,8 +212,6 @@ class LTI13CallbackHandler(OAuthCallbackHandler):
         Overrides the upstream get handler with it's standard implementation.
         '''
 
-#         raise ValueError('Was called!')
-
         self.check_state()
 
         user = await self.login_user()
