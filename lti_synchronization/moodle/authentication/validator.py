@@ -4,8 +4,6 @@ import typing as t
 import jwt
 from josepy.jws import JWS, Header
 from moodle.authentication.constants import (
-    ILLUMIDESK_LTI13_DEEP_LINKING_REQUIRED_CLAIMS,
-    ILLUMIDESK_LTI13_RESOURCE_LINK_REQUIRED_CLAIMS,
     LTI13_DEEP_LINKING_REQUIRED_CLAIMS, LTI13_GENERAL_REQUIRED_CLAIMS,
     LTI13_LOGIN_REQUEST_ARGS, LTI13_RESOURCE_LINK_REQUIRED_CLAIMS)
 from oauthlib.oauth1.rfc5849 import signature
@@ -13,6 +11,9 @@ from tornado.httpclient import AsyncHTTPClient
 from tornado.web import HTTPError
 from traitlets.config import LoggingConfigurable
 from moodle.utils import dump_json
+
+
+purl: str = 'https://purl.imsglobal.org/spec/lti/claim/'
 
 
 class LTI13LaunchValidator(LoggingConfigurable):
@@ -60,8 +61,6 @@ class LTI13LaunchValidator(LoggingConfigurable):
 
             self.log.debug('Get keys from jwks dict  %s' % key)
 
-        # raise Exception(key)
-
         print(key, '!' * 100)
 
         if not key:
@@ -106,7 +105,7 @@ class LTI13LaunchValidator(LoggingConfigurable):
 
             token = jwt.decode(id_token, verify=False)
 
-            self.log.debug(f'JWK verification is off, returning token {dump_json(token)}')
+            self.log.debug('JWK verification is off, returning token')
 
             return token
 
@@ -147,12 +146,7 @@ class LTI13LaunchValidator(LoggingConfigurable):
 
         '''
 
-        return (
-            jwt_decoded.get(
-                'https://purl.imsglobal.org/spec/lti/claim/message_type', None
-            )
-            == 'LtiDeepLinkingRequest'
-        )
+        return jwt_decoded.get(purl + 'message_type', None) == 'LtiDeepLinkingRequest'
 
     def validate_launch_request(
         self,
@@ -178,9 +172,6 @@ class LTI13LaunchValidator(LoggingConfigurable):
 
         '''
 
-
-        # return True
-
         # first validate global required keys
         if self._validate_global_required_keys(jwt_decoded):
 
@@ -188,81 +179,74 @@ class LTI13LaunchValidator(LoggingConfigurable):
             is_deep_linking: bool = self.is_deep_link_launch(jwt_decoded)
 
             required_claims_by_message_type = (
-                ILLUMIDESK_LTI13_DEEP_LINKING_REQUIRED_CLAIMS
+                LTI13_DEEP_LINKING_REQUIRED_CLAIMS
                 if is_deep_linking
-                else ILLUMIDESK_LTI13_RESOURCE_LINK_REQUIRED_CLAIMS
+                else LTI13_RESOURCE_LINK_REQUIRED_CLAIMS
             )
 
             self.log.warning(required_claims_by_message_type)
 
-            for claim, _ in required_claims_by_message_type.items():
+            for claim in required_claims_by_message_type:
 
                 if claim not in jwt_decoded:
-                    raise HTTPError(
-                        400, 'Required claim %s not included in request' % claim)
+                    raise HTTPError(400, 'Required claim %s not included in request' % claim)
 
             if not is_deep_linking:
 
                 # custom validations with resource launch
-                link_id = jwt_decoded.get(
-                    'https://purl.imsglobal.org/spec/lti/claim/resource_link').get('id')
+                link_id = jwt_decoded.get(purl + 'resource_link').get('id')
 
                 if not link_id:
 
-                    raise HTTPError(
-                        400, 'Incorrect value {link_id} for id in resource_link claim')
+                    raise HTTPError(400, 'Incorrect value {link_id} for id in resource_link claim')
 
         return True
 
     def _validate_global_required_keys(self, jwt_decoded: t.Dict[str, t.Any]) -> bool:
+        '''Check that all the required keys exist.
 
-        # does all the required keys exist?
+        Args:
+            jwt_decoded (t.Dict[str, t.Any]): .
 
-        for claim, _ in LTI13_GENERAL_REQUIRED_CLAIMS.items():
+        Returns:
+            bool: .
+
+        '''
+
+        for claim in LTI13_GENERAL_REQUIRED_CLAIMS:
 
             if claim not in jwt_decoded:
 
-                raise HTTPError(
-                    400, 'Required claim %s not included in request' % claim)
+                raise HTTPError(400, 'Required claim %s not included in request' % claim)
 
         # some fixed values
-        lti_version = jwt_decoded.get(
-            'https://purl.imsglobal.org/spec/lti/claim/version')
+        lti_version = jwt_decoded.get(purl + 'version')
 
         if lti_version != '1.3.0':
 
-            raise HTTPError(
-                400, 'Incorrect value %s for version claim' % lti_version)
+            raise HTTPError(400, 'Incorrect value %s for version claim' % lti_version)
 
         # validate context label
-        context_claim = jwt_decoded.get(
-            'https://purl.imsglobal.org/spec/lti/claim/context', None)
+        context_claim = jwt_decoded.get(purl + 'context', None)
 
-        if context_claim:
-            context_label = jwt_decoded.get(
-                'https://purl.imsglobal.org/spec/lti/claim/context').get('label')
-        else:
-            context_label = None
+        context_label = jwt_decoded.get(purl + 'context').get('label') if context_claim else None
 
         if context_label == '':
-            raise HTTPError(
-                400, 'Missing course context label for claim https://purl.imsglobal.org/spec/lti/claim/context')
+
+            raise HTTPError(400, 'Missing course context label for claim %scontext' % purl)
 
         # validate message type value
-        message_type = jwt_decoded.get(
-            'https://purl.imsglobal.org/spec/lti/claim/message_type', None)
+        message_type = jwt_decoded.get(purl + 'message_type', None)
 
         if (
-            message_type != LTI13_RESOURCE_LINK_REQUIRED_CLAIMS[
-                'https://purl.imsglobal.org/spec/lti/claim/message_type']
-            and message_type != LTI13_DEEP_LINKING_REQUIRED_CLAIMS['https://purl.imsglobal.org/spec/lti/claim/message_type']
+            message_type != LTI13_RESOURCE_LINK_REQUIRED_CLAIMS[purl + 'message_type']
+            and message_type != LTI13_DEEP_LINKING_REQUIRED_CLAIMS[purl + 'message_type']
         ):
-            raise HTTPError(
-                400, 'Incorrect value %s for version claim' % message_type)
+            raise HTTPError(400, 'Incorrect value %s for version claim' % message_type)
 
         return True
 
-    def validate_login_request(self, args: t.Dict[str, t.Any]) -> bool:
+    def validate_login_request(self, args: t.Dict[str, t.Any]) -> True:
         '''
         Validates step 1 of authentication request.
 
@@ -276,13 +260,9 @@ class LTI13LaunchValidator(LoggingConfigurable):
         for param in LTI13_LOGIN_REQUEST_ARGS:
 
             if param not in args:
-                raise HTTPError(
-                    400, 'Required LTI 1.3 arg %s not included in request' % param
-                )
+                raise HTTPError(400, 'Required LTI 1.3 arg %s not included in request' % param)
 
             if not args.get(param):
-                raise HTTPError(
-                    400, 'Required LTI 1.3 arg %s does not have a value' % param
-                )
+                raise HTTPError(400, 'Required LTI 1.3 arg %s does not have a value' % param)
 
         return True
