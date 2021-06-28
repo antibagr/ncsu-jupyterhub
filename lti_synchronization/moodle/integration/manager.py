@@ -254,12 +254,13 @@ class SyncManager:
                     f'nbgrader-{course.course_id}': [],
             })
 
+
+            self.create_grader(course.course_id)
+
             self.helper.update_course(
                 course.course_id,
                 lms_lineitems_endpoint=course.lms_lineitems_endpoint,
             )
-
-            self.create_grader(course.course_id)
 
             self.whitelist.add(grader / course.course_id)
 

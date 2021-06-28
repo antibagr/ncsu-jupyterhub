@@ -171,6 +171,10 @@ def create_user(username: str) -> None:
 
     os.system(f'adduser -q --gecos "" --disabled-password {username}')
 
+    if username.startswith('grader'):
+        return
+
+
     chmod(700, f'/home/{username}')
 
     chown(username, f'/home/{username}')

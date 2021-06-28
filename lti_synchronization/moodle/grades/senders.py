@@ -177,6 +177,7 @@ class LTI13GradeSender(GradesBaseSender):
         Fetch the lineitems from specific url and add them to general list
         '''
 
+        logger.info(f'url is {url}')
         items = []
 
         if not url:
@@ -187,6 +188,10 @@ class LTI13GradeSender(GradesBaseSender):
         resp = await client.fetch(url, method='GET', headers=self.headers)
 
         items = json.loads(resp.body)
+
+
+
+        logger.info(f'Got items from Moodle: {items}')
 
         if items:
 
@@ -217,6 +222,8 @@ class LTI13GradeSender(GradesBaseSender):
         logger.debug(f'LineItems retrieved: {self.all_lineitems}')
 
         lineitem_matched = None
+
+        logger.info(dump_json(self.all_lineitems))
 
         for item in self.all_lineitems:
 
