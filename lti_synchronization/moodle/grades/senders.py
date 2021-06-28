@@ -295,9 +295,7 @@ class LTI13GradeSender(GradesBaseSender):
 
         client = AsyncHTTPClient()
 
-        self.headers.update(
-            {'Content-Type': 'application/vnd.ims.lis.v1.score+json'}
-        )
+        self.headers['Content-Type'] = 'application/vnd.ims.lis.v1.score+json'
 
         for grade in nbgrader_grades:
 
@@ -319,5 +317,5 @@ class LTI13GradeSender(GradesBaseSender):
             logger.debug(f'URL for grades submission {url}')
 
             await client.fetch(
-                url, body=json.dumps(data), method='POST', headers=self.headers
+                url.replace('?type_id=1', ''), body=json.dumps(data), method='POST', headers=self.headers
             )
