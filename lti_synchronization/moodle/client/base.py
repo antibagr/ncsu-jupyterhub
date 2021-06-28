@@ -41,7 +41,7 @@ class BaseAPIClient(metaclass=DocInheritMeta(style='google_with_merge', include_
     '''
 
     DEFAULT_ENDPOINT: str = '/webservice/rest/server.php'
-    URL_ENV_NAME: str = 'MOODLE_API_URL'
+    URL_ENV_NAME: str = 'MOODLE_BASE_URL'
     KEY_ENV_NAME: str = 'MOODLE_API_TOKEN'
 
     key: str

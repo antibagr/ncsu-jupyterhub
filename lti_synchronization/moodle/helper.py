@@ -1,3 +1,4 @@
+import os
 import re
 import typing as t
 
@@ -110,9 +111,11 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
                 'course_id': cls.format_string(course['shortname']),
                 'title': course['displayname'],
                 'category': course['categoryid'],
+                'need_nbgrader': course['categoryid'] == os.environ['MOODLE_NBGRADER_CATEGORY_ID'],
                 'instructors': [],
                 'students': [],
                 'graders': [],
+                'lms_lineitems_endpoint': f'{os.environ["MOODLE_BASE_URL"]}/mod/lti/services.php/{course["id"]}/lineitems'
         })
 
     @classmethod

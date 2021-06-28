@@ -61,20 +61,8 @@ def synchronize(
 
         client.use_categories()
 
-    client.fetch_courses(
-        json_path=json_path,
-        save_on_disk=save_on_disk,
-        **filters
-    )
-
-    # default_configuration = open(SyncManager.path.in_file).read()
-
-    # new = mock.mock_open(read_data=default_configuration)
-
-    # with mock.patch('moodle.integration.template.open', new=new
-    # ) as mocked_open, mock.patch('moodle.integration.system.os.system', autospec=True
-    # ) as mocked_os, mock.patch('moodle.helper.Gradebook', autospec=True
-    # ) as mocked_gradebook:
+    client.fetch_courses(json_path=json_path,
+                         save_on_disk=save_on_disk, **filters)
 
     manager.update_jupyterhub(
                 courses=client.courses if not save_on_disk else None,
@@ -83,8 +71,3 @@ def synchronize(
                 out_file=out_file,
                 **filters,
             )
-
-    #     print(mocked_os.call_args_list)
-    #     print(mocked_open.call_args_list)
-
-    #     print(mocked_gradebook.call_args_list)

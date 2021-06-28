@@ -161,7 +161,6 @@ class SyncManager:
         graders_group: str = f'formgrade-{course.course_id}'
         students_group: str = f'nbgrader-{course.course_id}'
 
-
         # for student in course_db.students:
         #     course_db.remove_student(student.id)
 
@@ -242,18 +241,25 @@ class SyncManager:
         course.students = _format(course.students)
         course.instructors = _format(course.instructors)
 
-        self.update_services(course.course_id, self.courses.index(course))
-
         self.update_admins(course)
 
-        self.groups.update({
-                f'formgrade-{course.course_id}': [grader / course.course_id, ],
-                f'nbgrader-{course.course_id}': [],
-        })
+        if course.need_nbgrader:
 
-        self.create_grader(course.course_id)
+            self.update_services(course.course_id, self.courses.index(course))
 
-        self.whitelist.add(grader / course.course_id)
+            self.groups.update({
+                    f'formgrade-{course.course_id}': [grader / course.course_id, ],
+                    f'nbgrader-{course.course_id}': [],
+            })
+
+            self.helper.update_course(
+                course.course_id,
+                lms_lineitems_endpoint=course.lms_lineitems_endpoint,
+            )
+
+            self.create_grader(course.course_id)
+
+            self.whitelist.add(grader / course.course_id)
 
         self.add_users(course)
 
