@@ -12,6 +12,7 @@ from oauthlib.oauth1.rfc5849 import signature
 from tornado.httpclient import AsyncHTTPClient
 from tornado.web import HTTPError
 from traitlets.config import LoggingConfigurable
+from moodle.utils import dump_json
 
 
 class LTI13LaunchValidator(LoggingConfigurable):
@@ -105,7 +106,7 @@ class LTI13LaunchValidator(LoggingConfigurable):
 
             token = jwt.decode(id_token, verify=False)
 
-            self.log.debug(f'JWK verification is off, returning token {token}')
+            self.log.debug(f'JWK verification is off, returning token {dump_json(token)}')
 
             return token
 
