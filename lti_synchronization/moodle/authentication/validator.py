@@ -13,7 +13,11 @@ from traitlets.config import LoggingConfigurable
 from moodle.utils import dump_json
 
 
+<<<<<<< HEAD
 purl: str = 'https://purl.imsglobal.org/spec/lti/claim/'
+=======
+purl: str = purl + ''
+>>>>>>> origin
 
 
 class LTI13LaunchValidator(LoggingConfigurable):
