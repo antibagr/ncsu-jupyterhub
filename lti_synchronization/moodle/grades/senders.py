@@ -223,7 +223,7 @@ class LTI13GradeSender(GradesBaseSender):
             if (
                 self.assignment_name.lower() == item_label.lower()
                 or self.assignment_name.lower()
-                == self.helper.normalize_string(item_label)
+                == self.helper.format_string(item_label)
             ):
                 lineitem_matched = item['id']  # the id is the full url
                 logger.debug(
