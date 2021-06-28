@@ -236,15 +236,21 @@ class LTI13GradeSender(GradesBaseSender):
                 f'No lineitem matched with the assignment name: {self.assignment_name}'
             )
 
-        client = AsyncHTTPClient()
+        logger.info(f'Lineitem is {lineitem_matched}')
 
-        resp = await client.fetch(lineitem_matched, headers=self.headers)
+        logger.info(f'Item is {item}')
 
-        lineitem_info = json.loads(resp.body)
+        return lineitem_matched
 
-        logger.debug(f'Fetched lineitem info from lms {lineitem_info}')
+        # client = AsyncHTTPClient()
 
-        return lineitem_info
+        # resp = await client.fetch(item['id'], headers=self.headers)
+        #
+        # lineitem_info = json.loads(resp.body)
+        #
+        # logger.debug(f'Fetched lineitem info from lms {lineitem_info}')
+        #
+        # return lineitem_info
 
     async def _set_access_token_header(self):
         '''
