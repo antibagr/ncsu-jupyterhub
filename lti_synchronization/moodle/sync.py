@@ -67,16 +67,16 @@ def synchronize(
         **filters
     )
 
-    default_configuration = open(SyncManager.path.in_file).read()
+    # default_configuration = open(SyncManager.path.in_file).read()
 
-    new = mock.mock_open(read_data=default_configuration)
+    # new = mock.mock_open(read_data=default_configuration)
 
-    with mock.patch('moodle.integration.template.open', new=new
-    ) as mocked_open, mock.patch('moodle.integration.system.os.system', autospec=True
-    ) as mocked_os, mock.patch('moodle.helper.Gradebook', autospec=True
-    ) as mocked_gradebook:
+    # with mock.patch('moodle.integration.template.open', new=new
+    # ) as mocked_open, mock.patch('moodle.integration.system.os.system', autospec=True
+    # ) as mocked_os, mock.patch('moodle.helper.Gradebook', autospec=True
+    # ) as mocked_gradebook:
 
-        manager.update_jupyterhub(
+    manager.update_jupyterhub(
                 courses=client.courses if not save_on_disk else None,
                 json_path=json_path,
                 in_file=in_file,
@@ -84,8 +84,7 @@ def synchronize(
                 **filters,
             )
 
-        print(mocked_os.call_args_list)
+    #     print(mocked_os.call_args_list)
+    #     print(mocked_open.call_args_list)
 
-        print(mocked_open.call_args_list)
-
-        print(mocked_gradebook.call_args_list)
+    #     print(mocked_gradebook.call_args_list)

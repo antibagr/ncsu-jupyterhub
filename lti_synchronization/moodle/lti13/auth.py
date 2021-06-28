@@ -48,11 +48,11 @@ async def get_lms_access_token(
 
         yield dump_json({k: str(v) for k, v in _dict.items()})
 
-        if 'f_exc' in globals():
-            yield f_exc.response.body if f_exc.response else f_exc.message
-        else:
-            yield json.loads(resp.body)
-
+#         if 'f_exc' in globals():
+#             yield f_exc.response.body if f_exc.response else f_exc.message
+#         else:
+#             yield json.loads(resp.body)
+    logger.info('Token endpoint is: %s' % token_endpoint)
 
     token_params = {
         'iss': client_id,
@@ -103,12 +103,12 @@ async def get_lms_access_token(
         resp = await client.fetch(token_endpoint, method='POST', body=body, headers=None)
     except HTTPClientError as f_exc:
 
-        logger.info('Error by obtaining a token with lms. Detail: %s' % next(_params))
+        logger.info('Error by obtaining a token with lms. Detail: %s' % f_exc.response.body if f_exc.response else f_exc.message)
         raise
 
-    logger.debug('Token response body is %s' % next(_params))
-
-    return json.loads(resp.body)
+    else:
+        logger.debug('Token response body is %s' % json.loads(resp.body))
+        return json.loads(resp.body)
 
 
 def get_jwk(public_key: str) -> dict:

@@ -1,5 +1,8 @@
 version: "3.1"
 
+volumes:
+  jhub_home:
+
 services:
   jupyterhub:
     container_name: jhub
@@ -24,5 +27,7 @@ services:
 
       # Mount global nbgrader configuration
       - ./jupyterhub/nbgrader_configuration/nbgrader_global_config.py:/etc/jupyter/nbgrader_config.py
+
+      - jhub_home:/home
 
     command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log

@@ -22,8 +22,8 @@ class LTI13LoginHandler(OAuthLoginHandler):
     LTI 1.3 standard.
     '''
 
-    if os.getenv('DEBUG', 'True') == 'True':
-        log = logger
+#     if os.getenv('DEBUG', 'True') == 'True':
+#         log = logger
 
     def authorize_redirect(
         self,
@@ -33,6 +33,7 @@ class LTI13LoginHandler(OAuthLoginHandler):
         nonce: t.Optional[str] = None,
         redirect_uri: t.Optional[str] = None,
         state: t.Optional[str] = None,
+        **_ignored,
     ) -> None:
         '''
         Overrides the OAuth2Mixin.authorize_redirect method to to initiate the LTI 1.3 / OIDC
@@ -210,6 +211,8 @@ class LTI13CallbackHandler(OAuthCallbackHandler):
         '''
         Overrides the upstream get handler with it's standard implementation.
         '''
+
+#         raise ValueError('Was called!')
 
         self.check_state()
 

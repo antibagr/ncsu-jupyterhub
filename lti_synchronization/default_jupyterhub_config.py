@@ -7,6 +7,8 @@ from jupyterhub.spawner import LocalProcessSpawner
 if os.getenv('DEBUG', 'True') == 'True':
     c = MagicMock()
 
+c.JupyterHub.log_level = 'DEBUG'
+
 # ---------------
 # IP
 # ---------------
@@ -52,13 +54,13 @@ c.JupyterHub.authenticator_class = 'lti_synchronization.moodle.LTI13Authenticato
 c.LTI13Authenticator.client_id = os.environ.get('LTI13_CLIENT_ID')
 
 # 'LTI13_ENDPOINT'
-c.LTI13Authenticator.endpoint = DOMAIN + '/api/lti/jwks'
+c.LTI13Authenticator.endpoint = os.getenv('LTI13_ENDPOINT')
 
 # 'LTI13_AUTHORIZE_URL'
-c.LTI13Authenticator.authorize_url = DOMAIN + '/api/lti/authorize_redirect'
+c.LTI13Authenticator.authorize_url = os.getenv('LTI13_AUTHORIZE_URL')
 
 # 'LTI13_TOKEN_URL',
-c.LTI13Authenticator.token_url = DOMAIN + '/login/oauth2/token'
+c.LTI13Authenticator.token_url = os.getenv('LTI13_TOKEN_URL')
 
 c.JupyterHub.extra_handlers = [
   (r'/lti13/config$', f'{MODULE_NAME}.lti13.handlers.LTI13ConfigHandler'),

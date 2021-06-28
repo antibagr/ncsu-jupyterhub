@@ -5,4 +5,8 @@ docker rm -f jhub &> /dev/null && \
 
 echo "Deploying is completed."
 
-docker logs jhub -f
+echo "Start synchronization ..."
+
+source sync.sh
+
+# docker logs jhub -f

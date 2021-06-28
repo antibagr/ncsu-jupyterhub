@@ -1,6 +1,6 @@
 echo "Starting synchronization ..."
 
-docker exec -it jhub python3 lti_synchronization/sync.py
+docker exec -it jhub python3 lti_synchronization/app.py
 
 echo "Restarting container ..."
 

@@ -1,3 +1,4 @@
+import json
 import os
 import typing as t
 
@@ -105,30 +106,32 @@ class LTI13Authenticator(OAuthenticator):
 
             self.log.debug('Normalized course label is %s' % course_id)
 
-            username = ''
+            self.log.debug(json.dumps(jwt_decoded, indent=2))
 
-            if 'email' in jwt_decoded and jwt_decoded['email']:
-                username = self.helper.email_to_username(
-                    jwt_decoded['email'])
-            elif 'name' in jwt_decoded and jwt_decoded['name']:
-                username = jwt_decoded['name']
-            elif 'given_name' in jwt_decoded and jwt_decoded['given_name']:
-                username = jwt_decoded['given_name']
-            elif 'family_name' in jwt_decoded and jwt_decoded['family_name']:
-                username = jwt_decoded['family_name']
-            elif (
-                f'{purl}/lis' in jwt_decoded
-                and 'person_sourcedid'
-                in jwt_decoded[f'{purl}/lis']
-                and jwt_decoded[f'{purl}/lis']['person_sourcedid']
-            ):
-                username = jwt_decoded[f'{purl}/lis']['person_sourcedid'].lower()
+            username = jwt_decoded[purl + '/ext']['user_username']
 
-            elif (
-                'lms_user_id' in jwt_decoded[f'{purl}/custom']
-                and jwt_decoded[f'{purl}/custom']['lms_user_id']
-            ):
-                username = str(jwt_decoded[f'{purl}/custom']['lms_user_id'])
+#             if 'email' in jwt_decoded and jwt_decoded['email']:
+#                 username = self.helper.email_to_username(
+#                     jwt_decoded['email'])
+#             if 'name' in jwt_decoded and jwt_decoded['name']:
+#                 username = jwt_decoded['name']
+#             elif 'given_name' in jwt_decoded and jwt_decoded['given_name']:
+#                 username = jwt_decoded['given_name']
+#             elif 'family_name' in jwt_decoded and jwt_decoded['family_name']:
+#                 username = jwt_decoded['family_name']
+#             elif (
+#                 f'{purl}/lis' in jwt_decoded
+#                 and 'person_sourcedid'
+#                 in jwt_decoded[f'{purl}/lis']
+#                 and jwt_decoded[f'{purl}/lis']['person_sourcedid']
+#             ):
+#                 username = jwt_decoded[f'{purl}/lis']['person_sourcedid'].lower()
+#
+#             elif (
+#                 'lms_user_id' in jwt_decoded[f'{purl}/custom']
+#                 and jwt_decoded[f'{purl}/custom']['lms_user_id']
+#             ):
+#                 username = str(jwt_decoded[f'{purl}/custom']['lms_user_id'])
 
             # ensure the username is normalized
             self.log.debug('username is %s' % username)
