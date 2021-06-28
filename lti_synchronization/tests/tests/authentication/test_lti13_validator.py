@@ -9,7 +9,6 @@ from moodle.authentication.validator import LTI13LaunchValidator
 from moodle.typehints import JsonType
 
 
-
 @pytest.fixture
 def validator() -> LTI13LaunchValidator:
     return LTI13LaunchValidator()
@@ -113,9 +112,9 @@ def test_jwt_with_missed_claims(validator: LTI13LaunchValidator):
 
 
 def test_validate_with_required_params_in_initial_auth_request(
-        validator: LTI13LaunchValidator,
-        lti13_login_params: t.Dict[str, t.List[bytes]],
-    ):
+            validator: LTI13LaunchValidator,
+            lti13_login_params: t.Dict[str, t.List[bytes]],
+        ):
     '''
     Is the JWT valid with an correct message type claim?
     '''

@@ -178,7 +178,7 @@ class LTI13LaunchValidator(LoggingConfigurable):
         '''
 
 
-        return True
+        # return True
 
         # first validate global required keys
         if self._validate_global_required_keys(jwt_decoded):

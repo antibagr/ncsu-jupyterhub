@@ -51,7 +51,8 @@ async def test_sender_calls_set_access_token_header_before_to_send_grades(
 
     grades = (10, [{'score': 10, 'lms_user_id': 'id'}])
 
-    line_item_result = {'label': 'lab', 'id': 'line_item_url', 'scoreMaximum': 40}
+    line_item_result = {'label': 'lab',
+                        'id': 'line_item_url', 'scoreMaximum': 40}
 
     resp = [
         make_http_response(
@@ -76,6 +77,7 @@ async def test_sender_calls_set_access_token_header_before_to_send_grades(
                     os.getenv('LTI13_PRIVATE_KEY'),
                     os.getenv('LTI13_TOKEN_URL'),
                 )
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -163,7 +165,7 @@ async def test_get_lineitems_from_url_method_calls_itself_recursively(
     sender = LTI13GradeSender('course-id', 'lab')
 
     lineitems_body_result = {
-        'body': [ dict(id='value', scoreMaximum=0.0, label='label', resourceLinkId='abc') ],
+        'body': [dict(id='value', scoreMaximum=0.0, label='label', resourceLinkId='abc')],
         'headers': headers,
     }
 

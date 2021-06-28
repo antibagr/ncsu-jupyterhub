@@ -31,7 +31,7 @@ def valid_email(email: str) -> bool:
     '''
     Check if email is valid with regex.
     '''
-    return bool(re.search(r'^[\w\.\+\-]+\@[\w]+\.[a-z]{2,3}$', email))
+    return bool(re.search(r'^[\w.+\-]+@[\w]+\.[a-z]{2,3}$', email))
 
 
 def random_string(length: int = 10) -> str:
@@ -107,7 +107,7 @@ def user_fabric() -> t.Callable[[t.Any, ...], User]:
             for role in roles:
                 if role not in ROLES:
                     raise ValueError(
-                        'Role [%s] does not set in moodle.setitngs.ROLES tuple.' % role)
+                        'Role [%s] does not set in moodle.settings.ROLES tuple.' % role)
 
         return JsonDict({
             'id': id or random.randint(0, 100),

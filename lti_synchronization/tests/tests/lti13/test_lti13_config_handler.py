@@ -66,7 +66,7 @@ def test_get_method_writes_email_field_within_custom_fields(json_arg: dict):
     custom_fields = json_arg['custom_fields']
 
     assert 'email' in custom_fields
-    assert '$Person.email.primary' == custom_fields['email']
+    assert custom_fields['email'] == '$Person.email.primary'
 
 
 @pytest.mark.parametrize('field,value', [
@@ -75,7 +75,7 @@ def test_get_method_writes_email_field_within_custom_fields(json_arg: dict):
 ])
 def test_abc(json_arg: dict, field: str, value: str):
     '''
-    test_get_method_writes_lms_user_id_custom_field_within_each_course_navigation_placement
+    test_get_method_writes_lms_user_id_custom_field_within_each_course_nav_placement
 
     Does the get method write 'lms_user_id' field in custom_fields
     within each course_navigation placement setting?
@@ -86,22 +86,23 @@ def test_abc(json_arg: dict, field: str, value: str):
 
     extensions = json_arg['extensions']
 
-    course_navigation_placement = None
+    # course navigation placement
+    course_nav_placement = None
 
     for ext in extensions:
 
         # find the settings field in each extension
         # to ensure a course_navigation placement was used
         if 'settings' in ext and 'placements' in ext['settings']:
-            course_navigation_placement = [
+            course_nav_placement = [
                 placement
                 for placement in ext['settings']['placements']
                 if placement['placement'] == 'course_navigation'
             ]
 
-            assert course_navigation_placement
+            assert course_nav_placement
 
-            placement_custom_fields = course_navigation_placement[0]['custom_fields']
+            placement_custom_fields = course_nav_placement[0]['custom_fields']
 
             assert placement_custom_fields
             assert placement_custom_fields['lms_user_id']
@@ -118,4 +119,4 @@ def test_get_method_writes_lms_user_id_field_within_custom_fields(json_arg: dict
 
     assert 'lms_user_id' in custom_fields
 
-    assert '$User.id' == custom_fields['lms_user_id']
+    assert custom_fields['lms_user_id'] == '$User.id'

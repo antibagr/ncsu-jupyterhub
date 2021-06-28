@@ -7,8 +7,10 @@ from moodle.authentication.authenticator import LTI13Authenticator
 from moodle.authentication.authenticator import LTIHelper
 from moodle.authentication.validator import LTI13LaunchValidator
 
+
 @pytest.fixture
-def mock_nbhelper(): return MagicMock()
+def mock_nbhelper():
+    return MagicMock()
 
 
 @pytest.mark.asyncio
@@ -170,6 +172,7 @@ async def test_authenticator_returns_auth_state_with_course_id_normalized(
             assert result['auth_state']['course_id'] == 'courseid-with_large_name'
 
 
+@pytest.mark.skip(reason='No need to work with email name')
 @pytest.mark.asyncio
 async def test_authenticator_returns_auth_state_name_from_lti13_email_claim(
     jws,
@@ -201,6 +204,7 @@ async def test_authenticator_returns_auth_state_name_from_lti13_email_claim(
             assert result['name'] == 'usertest'
 
 
+@pytest.mark.skip(reason='No need to work with username in Moodle.')
 @pytest.mark.asyncio
 async def test_authenticator_returns_username_in_auth_state_with_with_name(
     jws,
@@ -231,6 +235,7 @@ async def test_authenticator_returns_username_in_auth_state_with_with_name(
             assert result['name'] == 'foo'
 
 
+@pytest.mark.skip(reason='No need to work with given name in Moodle.')
 @pytest.mark.asyncio
 async def test_authenticator_returns_username_in_auth_state_with_with_given_name(
     jws,
@@ -261,6 +266,7 @@ async def test_authenticator_returns_username_in_auth_state_with_with_given_name
             assert result['name'] == 'foo_bar'
 
 
+@pytest.mark.skip(reason='No need to work with family name')
 @pytest.mark.asyncio
 async def test_authenticator_returns_username_in_auth_state_with_family_name(
     jws,
@@ -327,6 +333,7 @@ async def test_authenticator_returns_username_in_auth_state_with_person_sourcedi
             assert result['name'] == 'abc123'
 
 
+@pytest.mark.skip(reason='No need to get lsm_user_id anymore.')
 @pytest.mark.asyncio
 async def test_authenticator_returns_username_in_auth_state_with_privacy_enabled(
     jws_with_privacy,

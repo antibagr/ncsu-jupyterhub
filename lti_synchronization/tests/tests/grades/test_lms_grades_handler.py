@@ -6,6 +6,7 @@ from tornado.web import RequestHandler
 from moodle.authentication.authenticator import LTI13Authenticator
 from moodle.grades.handlers import SendGradesHandler
 
+
 @pytest.fixture
 def mock_tornado_write() -> MagicMock:
     with patch('tornado.web.RequestHandler.write') as mocker:
@@ -29,7 +30,6 @@ def grades_client(make_mock_request_handler: RequestHandler) -> SendGradesHandle
         }
         mock_user.configure_mock(**attrs)
         return mock_user
-
 
     request_handler = make_mock_request_handler(
         RequestHandler, authenticator=LTI13Authenticator,

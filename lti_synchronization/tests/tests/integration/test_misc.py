@@ -155,8 +155,8 @@ def test_templater_new_service():
 
     service = Templater.create_service('test_course', 'token')
 
-    assert tuple(service.keys()) == ('name', 'admin', 'url',
-                                     'command', 'user', 'cwd', 'api_token', 'environment')
+    assert tuple(service.keys()) == ('name', 'admin', 'url', 'command', 'user',
+                                     'cwd', 'api_token', 'environment')
 
     assert service.admin is True
     assert service.name == 'test_course'

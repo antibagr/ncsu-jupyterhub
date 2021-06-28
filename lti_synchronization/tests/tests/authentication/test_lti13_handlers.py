@@ -17,7 +17,6 @@ from moodle.authentication.helper import LTIHelper
 
 @pytest.fixture
 def local_handler(make_mock_request_handler: RequestHandler) -> LTI13LoginHandler:
-
     return make_mock_request_handler(LTI13LoginHandler)
 
 
@@ -37,7 +36,8 @@ async def test_login_handler_raises_env_error(
     with patch.object(LTIHelper, 'convert_request_to_dict', return_value=lti13_login_params_dict):
 
         with pytest.raises(EnvironmentError):
-            LTI13LoginHandler(local_handler.application, local_handler.request).post()
+            LTI13LoginHandler(local_handler.application,
+                              local_handler.request).post()
 
 
 @pytest.mark.asyncio
@@ -53,7 +53,8 @@ async def test_login_handler_invokes_convert_request_to_dict_method(
     with patch.object(LTIHelper, 'convert_request_to_dict', return_value=lti13_login_params_dict) as mock_convert:
         with patch.object(LTI13LoginHandler, 'authorize_redirect', return_value=None):
 
-            LTI13LoginHandler(local_handler.application, local_handler.request).post()
+            LTI13LoginHandler(local_handler.application,
+                              local_handler.request).post()
 
             assert mock_convert.called
 
@@ -77,7 +78,8 @@ async def test_lti_13_login_handler_invokes_validate_login_request_method(
             return_value=True
         ) as mock_validate:
 
-            LTI13LoginHandler(local_handler.application, local_handler.request).post()
+            LTI13LoginHandler(local_handler.application,
+                              local_handler.request).post()
 
             assert mock_validate.called
 
@@ -97,7 +99,8 @@ async def test_lti_13_login_handler_invokes_redirect_method(
     with patch.object(LTIHelper, 'convert_request_to_dict', return_value=lti13_auth_params_dict):
         with patch.object(LTI13LoginHandler, 'authorize_redirect', return_value=None) as mock_redirect:
 
-            LTI13LoginHandler(local_handler.application, local_handler.request).post()
+            LTI13LoginHandler(local_handler.application,
+                              local_handler.request).post()
 
             assert mock_redirect.called
 
@@ -127,7 +130,8 @@ async def test_login_redirect_values(
 
                     expected_nonce = nonce_raw.hexdigest()
 
-                    LTI13LoginHandler(local_handler.application, local_handler.request).post()
+                    LTI13LoginHandler(local_handler.application,
+                                      local_handler.request).post()
 
                     mock_auth_redirect.assert_called_once_with(
                         client_id=expected['client_id'],
@@ -137,6 +141,7 @@ async def test_login_redirect_values(
                         state=expected_state,
                         nonce=expected_nonce,
                     )
+
 
 @pytest.mark.skip
 @pytest.mark.asyncio
@@ -149,7 +154,8 @@ async def test_lti_13_login_handler_sets_state_with_next_url_obtained_from_targe
     the state and returning the hexdigest?
     '''
 
-    lti13_login_params['target_link_uri'] = [lti13_login_params['target_link_uri'][0] + b'?next=/user-redirect/lab']
+    lti13_login_params['target_link_uri'] = [
+        lti13_login_params['target_link_uri'][0] + b'?next=/user-redirect/lab']
 
     decoded_dict = LTIHelper.convert_request_to_dict(lti13_login_params)
 
@@ -162,7 +168,8 @@ async def test_lti_13_login_handler_sets_state_with_next_url_obtained_from_targe
                     'next_url': '/user-redirect/lab',
                 }
 
-                login_instance = LTI13LoginHandler(local_handler.application, local_handler.request)
+                login_instance = LTI13LoginHandler(
+                    local_handler.application, local_handler.request)
 
                 login_instance.post()
 

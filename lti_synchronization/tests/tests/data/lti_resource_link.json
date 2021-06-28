@@ -35,6 +35,9 @@
          }
       }
    },
+   "https://purl.imsglobal.org/spec/lti/claim/ext": {
+     "user_username": "abc123"
+   },
    "https://purl.imsglobal.org/spec/lti/claim/tool_platform":{
       "guid":"srnuz6h1U8kOMmETzoqZTJiPWzbPXIYkAUnnAJ4u:canvas-lms",
       "name":"moodle",
@@ -51,7 +54,7 @@
       "document_target":"iframe",
       "height":400,
       "width":800,
-      "return_url":"https://moodle.instructure.com/courses/147/external_content/success/external_tool_redirect",
+        "return_url":"https://moodle.instructure.com/courses/147/external_content/success/external_tool_redirect",
       "locale":"en",
       "validation_context":null,
       "errors":{

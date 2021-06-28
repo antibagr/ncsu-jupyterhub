@@ -104,7 +104,8 @@ def make_http_response() -> HTTPResponse:
             A tornado.client.HTTPResponse object
         '''
 
-        dict_to_buffer = StringIO(json.dumps(body)) if body is not None else None
+        dict_to_buffer = StringIO(json.dumps(
+            body)) if body is not None else None
 
         return HTTPResponse(
             request=handler,
@@ -230,9 +231,9 @@ def jws(test_dir: Path) -> JsonType:
 
     with open(test_dir / 'data' / 'lti_resource_link.json', 'r') as f:
 
-        jws = json.loads(f.read())
+        jws_dict = json.loads(f.read())
 
-    return jws
+    return jws_dict
 
 
 @pytest.fixture
@@ -244,9 +245,9 @@ def jws_with_privacy(test_dir: Path) -> JsonType:
 
     with open(test_dir / 'data' / 'lti_resource_link_with_privacy.json', 'r') as f:
 
-        jws = json.loads(f.read())
+        jws_dict = json.loads(f.read())
 
-    return jws
+    return jws_dict
 
 
 @pytest.fixture
@@ -294,12 +295,12 @@ def lti13_auth_params():
         scope='openid',
         response_mode='form_post',
         prompt='none',
-        client_id = '125900000000000081',
-        redirect_uri = 'https://acme.moodle.com/hub/oauth_callback',
-        lti_message_hint = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ2ZXJpZmllciI6IjFlMjk2NjEyYjZmMjdjYmJkZTg5YmZjNGQ1ZmQ5ZDBhMzhkOTcwYzlhYzc0NDgwYzdlNTVkYzk3MTQyMzgwYjQxNGNiZjMwYzM5Nzk1Y2FmYTliOWYyYTgzNzJjNzg3MzAzNzAxZDgxMzQzZmRmMmIwZDk5ZTc3MWY5Y2JlYWM5IiwiY2FudmFzX2RvbWFpbiI6ImlsbHVtaWRlc2suaW5zdHJ1Y3R1cmUuY29tIiwiY29udGV4dF90eXBlIjoiQ291cnNlIiwiY29udGV4dF9pZCI6MTI1OTAwMDAwMDAwMDAwMTM2LCJleHAiOjE1OTE4MzMyNTh9.uYHinkiAT5H6EkZW9D7HJ1efoCmRpy3Id-gojZHlUaA',
-        login_hint = '185d6c59731a553009ca9b59ca3a885104ecb4ad',
-        state = 'eyJzdGF0ZV9pZCI6ICI2ZjBlYzE1NjlhM2E0MDJkYWM2MTYyNjM2MWQwYzEyNSIsICJuZXh0X3VybCI6ICIvIn0=',
-        nonce = '38048502278109788461591832959',
+        client_id='125900000000000081',
+        redirect_uri='https://acme.moodle.com/hub/oauth_callback',
+        lti_message_hint='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ2ZXJpZmllciI6IjFlMjk2NjEyYjZmMjdjYmJkZTg5YmZjNGQ1ZmQ5ZDBhMzhkOTcwYzlhYzc0NDgwYzdlNTVkYzk3MTQyMzgwYjQxNGNiZjMwYzM5Nzk1Y2FmYTliOWYyYTgzNzJjNzg3MzAzNzAxZDgxMzQzZmRmMmIwZDk5ZTc3MWY5Y2JlYWM5IiwiY2FudmFzX2RvbWFpbiI6ImlsbHVtaWRlc2suaW5zdHJ1Y3R1cmUuY29tIiwiY29udGV4dF90eXBlIjoiQ291cnNlIiwiY29udGV4dF9pZCI6MTI1OTAwMDAwMDAwMDAwMTM2LCJleHAiOjE1OTE4MzMyNTh9.uYHinkiAT5H6EkZW9D7HJ1efoCmRpy3Id-gojZHlUaA',
+        login_hint='185d6c59731a553009ca9b59ca3a885104ecb4ad',
+        state='eyJzdGF0ZV9pZCI6ICI2ZjBlYzE1NjlhM2E0MDJkYWM2MTYyNjM2MWQwYzEyNSIsICJuZXh0X3VybCI6ICIvIn0=',
+        nonce='38048502278109788461591832959',
     )
 
 
@@ -351,18 +352,14 @@ def make_auth_state_dict() -> JsonType:
 @pytest.fixture
 def mock_nbgrader_helper() -> t.Generator[Mock, None, None]:
 
-    with patch('moodle.helper.Gradebook'):
-        with patch.multiple(
-            'moodle.helper.NBGraderHelper',
-            # __init__=lambda x, y: None,
-            update_course=Mock(return_value=None),
-            # add_user_to_nbgrader_gradebook=Mock(return_value=None),
-            # register_assignment=Mock(return_value=None),
-            get_course=Mock(
-                return_value=Mock(
-                    id='123',
-                    lms_lineitems_endpoint='example.moodle.com/api/lti/courses/1/line_items',
-                )
-            ),
-        ) as mock_nb:
-            yield mock_nb
+    course = Mock(
+        id='123',
+        lms_lineitems_endpoint='example.moodle.com/api/lti/courses/1/line_items',
+    )
+
+    with patch('moodle.helper.Gradebook'), patch('moodle.helper.NBGraderHelper') as mock_nb:
+
+        mock_nb.update_course = Mock(return_value=None),
+        mock_nb.get_course = Mock(return_value=course),
+
+        yield mock_nb

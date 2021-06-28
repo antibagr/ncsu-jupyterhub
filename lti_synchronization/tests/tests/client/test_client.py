@@ -1,6 +1,6 @@
 import os
 import typing as t
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import call, patch
 
 import pytest
 from moodle.client.api import MoodleClient

@@ -40,6 +40,9 @@
         ],
         "validation_context": null
     },
+    "https://purl.imsglobal.org/spec/lti/claim/ext": {
+      "user_username": "abc123"
+    },
     "https://purl.imsglobal.org/spec/lti/claim/custom": {
         "lms_user_id": 4
     },

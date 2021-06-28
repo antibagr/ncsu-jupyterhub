@@ -36,11 +36,11 @@ def test_parsing_pem_file(lti13_config_environ: None):
 
     certs = pem.parse_file(pem_key)
 
-    with patch.object(pem, 'parse_file', return_value=certs) as mock_pem_parse_file:
+    with patch.object(pem, 'parse_file', return_value=certs) as mock_parse:
 
         get_pem_text_from_file(pem_key)
 
-        assert mock_pem_parse_file.called
+        assert mock_parse.called
 
 
 @pytest.mark.slow

@@ -11,8 +11,8 @@ from nbgrader.api import Course, Gradebook, MissingEntry
 
 from moodle.helper import NBGraderHelper
 from moodle.errors import (AssignmentWithoutGradesError,
-                            GradesSenderCriticalError,
-                            GradesSenderMissingInfoError)
+                           GradesSenderCriticalError,
+                           GradesSenderMissingInfoError)
 from moodle.lti13.auth import get_lms_access_token
 
 
@@ -101,7 +101,7 @@ class GradesBaseSender(metaclass=DocInheritMeta(style='google_with_merge', inclu
 
             except MissingEntry as exc:
                 logger.error(f'Assignment not found in database: {exc}')
-                raise GradesSenderMissingInfoError(course_id) from exc
+                raise GradesSenderMissingInfoError(self.course_id) from exc
 
             for submission in submissions:
 
@@ -168,7 +168,6 @@ class LTI13GradeSender(GradesBaseSender):
                 return links[0][0]
 
         except StopIteration:
-
             ...
 
     async def _get_lineitems_from_url(self, url: str) -> None:

@@ -165,12 +165,12 @@ class LTI13Authenticator(OAuthenticator):
             lms_user_id = jwt_decoded['sub'] if 'sub' in jwt_decoded else username
 
             # ensure the user name is normalized
-            username_normalized = self.helper.format_string(username)
-
-            self.log.debug('Assigned username is: %s' % username_normalized)
+            # username_normalized = self.helper.format_string(username)
+            #
+            # self.log.debug('Assigned username is: %s' % username_normalized)
 
             return {
-                'name': username_normalized,
+                'name': username,
                 'auth_state': {
                     'course_id': course_id,
                     'user_role': user_role,

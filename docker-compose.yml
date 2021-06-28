@@ -30,4 +30,4 @@ services:
 
       - jhub_home:/home
 
-    command: jupyterhub &>> /srv/jupyterhub/jupyterhub.log
+    command: jupyterhub -f /srv/jupyterhub/jupyterhub_config.py &>> /var/log/jupyterhub.log
