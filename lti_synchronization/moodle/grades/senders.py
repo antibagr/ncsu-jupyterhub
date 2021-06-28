@@ -266,9 +266,9 @@ class LTI13GradeSender(GradesBaseSender):
 
         # set all the headers to use in lms requests
         self.headers = {
-            'Authorization': '{token_type} {access_token}'.format(**token),
-            'Content-Type': 'application/vnd.ims.lis.v2.lineitem+json',
-            'accept': 'application/vnd.ims.lis.v2.lineitem+json',
+          'Authorization': '{token_type} {access_token}'.format(**token),
+          'Content-Type': 'application/vnd.ims.lis.v2.lineitem+json',
+          'accept': 'application/vnd.ims.lis.v2.lineitemcontainer+json'
         }
 
     async def send_grades(self) -> None:
