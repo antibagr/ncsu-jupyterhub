@@ -13,6 +13,8 @@ from jupyterhub.utils import url_path_join
 from tornado.web import HTTPError
 from traitlets import Unicode
 
+from moodle.utils import dump_json
+
 
 class LTI13Authenticator(OAuthenticator):
     '''Custom authenticator used with LTI 1.3 requests'''
@@ -84,7 +86,7 @@ class LTI13Authenticator(OAuthenticator):
         # jwt_verify_and_decode() but logging the
         id_token: str = handler.get_argument('id_token')
 
-        self.log.debug(f'Got ID token issued by platform: {len(id_token)}')
+        self.log.debug(f'Got ID token issued by platform: {len(id_token) if id_token else None}')
 
         # extract claims from jwt (id_token)
         # sent by the platform. as tool use the jwks (public key)
@@ -96,7 +98,7 @@ class LTI13Authenticator(OAuthenticator):
             audience=self.client_id,
         )
 
-        self.log.debug(f'Decoded JWT is {jwt_decoded}')
+        self.log.debug(f'Decoded JWT is {dump_json(jwt_decoded)}')
 
         if self.validator.validate_launch_request(jwt_decoded):
 
