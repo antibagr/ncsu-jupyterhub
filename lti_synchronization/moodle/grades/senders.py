@@ -15,6 +15,8 @@ from moodle.errors import (AssignmentWithoutGradesError,
                            GradesSenderMissingInfoError)
 from moodle.lti13.auth import get_lms_access_token
 
+from moodle.utils import dump_json
+
 
 class GradesBaseSender(metaclass=DocInheritMeta(style='google_with_merge', include_special_methods=True)):
     '''
@@ -285,7 +287,7 @@ class LTI13GradeSender(GradesBaseSender):
         _, nbgrader_grades = self._retrieve_grades_from_db()
 
         if not nbgrader_grades:
-            raise AssignmentWithoutGradesError
+            raise AssignmentWithoutGradesError('No grades found.')
 
         await self._set_access_token_header()
 
@@ -310,12 +312,12 @@ class LTI13GradeSender(GradesBaseSender):
                 'comment': '',
             }
 
-            logger.info(f'data used to sent scores: {data}')
+            logger.info(f'data used to sent scores: {dump_json(data)}')
 
-            url = lineitem_info['id'] + '/scores'
+            url = lineitem_info['id'].replace('?type_id=1', '') + '/scores'
 
             logger.debug(f'URL for grades submission {url}')
 
             await client.fetch(
-                url.replace('?type_id=1', ''), body=json.dumps(data), method='POST', headers=self.headers
+                url, body=json.dumps(data), method='POST', headers=self.headers
             )

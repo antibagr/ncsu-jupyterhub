@@ -170,3 +170,7 @@ def create_user(username: str) -> None:
     logger.info(f'Create linux user {username}.')
 
     os.system(f'adduser -q --gecos "" --disabled-password {username}')
+
+    chmod(700, f'/home/{username}')
+
+    chown(username, f'/home/{username}')
