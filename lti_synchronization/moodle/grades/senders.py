@@ -301,29 +301,23 @@ class LTI13GradeSender(GradesBaseSender):
 
         for grade in nbgrader_grades:
 
-            try:
-                score = float(grade['score'])
-                data = {
-                    'timestamp': datetime.now().isoformat(),
-                    'userId': grade['lms_user_id'],
-                    'scoreGiven': score,
-                    'scoreMaximum': score_maximum,
-                    'gradingProgress': 'FullyGraded',
-                    'activityProgress': 'Completed',
-                    'comment': '',
-                }
+            score = float(grade['score'])
+            data = {
+                'timestamp': datetime.now().isoformat(),
+                'userId': grade['lms_user_id'],
+                'scoreGiven': score,
+                'scoreMaximum': score_maximum,
+                'gradingProgress': 'FullyGraded',
+                'activityProgress': 'Completed',
+                'comment': '',
+            }
 
-                logger.info(f'data used to sent scores: {data}')
+            logger.info(f'data used to sent scores: {data}')
 
-                url = lineitem_info['id'] + '/scores'
+            url = lineitem_info['id'] + '/scores'
 
-                logger.debug(f'URL for grades submission {url}')
+            logger.debug(f'URL for grades submission {url}')
 
-                await client.fetch(
-                    url, body=json.dumps(data), method='POST', headers=self.headers
-                )
-
-            except Exception as e:
-                logger.error(
-                    f'Something went wrong by sending grader for {grade["lms_user_id"]}.{e}'
-                )
+            await client.fetch(
+                url, body=json.dumps(data), method='POST', headers=self.headers
+            )

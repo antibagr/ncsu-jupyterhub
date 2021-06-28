@@ -40,21 +40,24 @@ class SendGradesHandler(BaseHandler):
         try:
             await lti_grade_sender.send_grades()
 
-        except errors.GradesSenderCriticalError as exc:
-            raise web.HTTPError(
-                400, 'There was an critical error, please check logs.') from exc
+        except Exception as exc:
+            raise web.HTTPError(400, str(exc)) from exc
 
-        except errors.AssignmentWithoutGradesError as exc:
-            raise web.HTTPError(
-                400, 'There are no grades yet to submit') from exc
-
-        except errors.GradesSenderMissingInfoError as exc:
-
-            self.log.error(f'There are missing values.{exc}')
-
-            raise web.HTTPError(
-                400,
-                f'Impossible to send grades. There are missing values, please check logs.',
-            ) from exc
+        # except errors.GradesSenderCriticalError as exc:
+        #     raise web.HTTPError(
+        #         400, 'There was an critical error, please check logs.') from exc
+        #
+        # except errors.AssignmentWithoutGradesError as exc:
+        #     raise web.HTTPError(
+        #         400, 'There are no grades yet to submit') from exc
+        #
+        # except errors.GradesSenderMissingInfoError as exc:
+        #
+        #     self.log.error(f'There are missing values.{exc}')
+        #
+        #     raise web.HTTPError(
+        #         400,
+        #         f'Impossible to send grades. There are missing values, please check logs.',
+        #     ) from exc
 
         self.write(json.dumps({'success': True}))
