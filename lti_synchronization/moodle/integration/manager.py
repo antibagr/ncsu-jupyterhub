@@ -186,6 +186,8 @@ class SyncManager:
 
             self._unix_users.add(user.username)
 
+            system.chown(user.username, f'/home/{user.username}')
+
     def process_course(self, course: Course) -> None:
         '''Process data neccesary to configure Jupyterhub, interacts with OS.
 
