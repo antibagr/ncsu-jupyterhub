@@ -240,7 +240,7 @@ class LTI13GradeSender(GradesBaseSender):
 
         logger.info(f'Item is {item}')
 
-        return lineitem_matched
+        return item
 
         # client = AsyncHTTPClient()
 
