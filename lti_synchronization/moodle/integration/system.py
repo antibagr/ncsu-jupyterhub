@@ -171,10 +171,11 @@ def create_user(username: str) -> None:
 
     os.system(f'adduser -q --gecos "" --disabled-password {username}')
 
-    if username.startswith('grader'):
-        return
+    if not username.startswith('grader'):
 
+        # graders should have public folders in order to communicate with
+        # their databases.
 
-    chmod(700, f'/home/{username}')
+        chmod(700, f'/home/{username}')
 
-    chown(username, f'/home/{username}')
+        chown(username, f'/home/{username}')

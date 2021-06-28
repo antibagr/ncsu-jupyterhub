@@ -254,7 +254,6 @@ class SyncManager:
                     f'nbgrader-{course.course_id}': [],
             })
 
-
             self.create_grader(course.course_id)
 
             self.helper.update_course(
