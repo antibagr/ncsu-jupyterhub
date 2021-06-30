@@ -135,22 +135,23 @@ class SyncManager:
 
         course_dir = Path(grader_home / course_id)
 
-        system.create_user(course_grader)
-
         system.create_dirs(
             grader_home / '.jupyter',
             course_dir / 'source',
         )
 
-        system.create_database(course_grader)
-
         self.temp.write_grader_config(course_id)
 
-        system.chown(course_grader, grader_home, group=course_grader)
+        system.create_user(course_grader)
 
-        system.chmod(755, grader_home)
+        system.create_database(course_grader)
 
         system.enable_nbgrader(course_grader)
+
+        # system.chown(course_grader, grader_home, group=course_grader)
+
+        # system.chmod(755, grader_home)
+
 
     def add_users(self, course: Course) -> None:
         '''
