@@ -148,7 +148,9 @@ class SyncManager:
 
         system.enable_nbgrader(course_grader)
 
-        # system.chown(course_grader, grader_home, group=course_grader)
+        system.chmod(700, grader_home)
+
+        system.chmod(755, grader_home / 'grader.db')
 
         # system.chmod(755, grader_home)
 
