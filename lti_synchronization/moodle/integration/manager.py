@@ -131,6 +131,10 @@ class SyncManager:
 
         course_grader: str = grader / course_id
 
+        if course_grader in self._unix_users:
+
+            return
+
         grader_home = Path(f'/home/{course_grader}')
 
         course_dir = Path(grader_home / course_id)
@@ -151,9 +155,6 @@ class SyncManager:
         system.chmod(700, grader_home)
 
         system.chmod(755, grader_home / 'grader.db')
-
-        # system.chmod(755, grader_home)
-
 
     def add_users(self, course: Course) -> None:
         '''
