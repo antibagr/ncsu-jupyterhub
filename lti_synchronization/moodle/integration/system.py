@@ -99,9 +99,9 @@ def create_database(grader: str) -> None:
 
     os.system(f'touch {grader_db}')
 
-    chown(grader, grader_db, group=grader)
+    chown(grader, f'/home/{grader}', group=grader)
 
-    chmod(644, grader_db)
+    chmod(755, f'/home/{grader}')
 
 
 def chown(user: str, /, *dirs: Dirs, group: t.Optional[str] = None) -> None:
@@ -171,7 +171,7 @@ def create_user(username: str) -> None:
 
     os.system(f'adduser -q --gecos "" --disabled-password {username}')
 
-    if not username.startswith('grader'):
+    if 'grader' not in username:
 
         # graders should have public folders in order to communicate with
         # their databases.

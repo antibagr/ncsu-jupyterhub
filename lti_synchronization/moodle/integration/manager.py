@@ -131,23 +131,24 @@ class SyncManager:
 
         course_grader: str = grader / course_id
 
-        grader_home: str = f'/home/{course_grader}'
+        grader_home = Path(f'/home/{course_grader}')
 
-        course_dir = Path(f'{grader_home}/{course_id}')
+        course_dir = Path(grader_home / course_id)
 
         system.create_user(course_grader)
 
         system.create_dirs(
-            course_grader,
-            course_dir / '.jupyter',
+            grader_home / '.jupyter',
             course_dir / 'source',
         )
 
+        system.create_database(course_grader)
+
         self.temp.write_grader_config(course_id)
 
-        system.chown(course_grader, grader_home, group=course_grader)
+        system.chown(course_grader, grader_home, grader_home / 'grader.db', group=course_grader)
 
-        system.chmod(755, grader_home)
+        system.chmod(755, grader_home, grader_home / 'grader.db')
 
         system.enable_nbgrader(course_grader)
 
