@@ -141,8 +141,11 @@ class SyncManager:
 
         self.temp.write_grader_config(course_id)
 
-        system.chown(course_grader, jupyter,
-                     course_dir / 'source', course_dir, group=course_grader)
+        dirs = (jupyter, course_dir / 'source', course_dir)
+
+        system.chown(course_grader, *dirs, group=course_grader)
+
+        system.chmod(644, *dirs)
 
         system.enable_nbgrader(course_grader)
 
