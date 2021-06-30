@@ -85,7 +85,6 @@ def _create_dirs(dirs):
 def create_database(grader: str) -> None:
     '''
     Create new sqlite database if not exists already.
-    Setup permissions to 644 and owner to a grader.
 
     Args:
         grader (str): Course's grader name
@@ -97,11 +96,7 @@ def create_database(grader: str) -> None:
 
     grader_db: str = f'/home/{grader}/grader.db'
 
-    os.system(f'touch {grader_db}')
-
-    chown(grader, f'/home/{grader}', group=grader)
-
-    chmod(755, f'/home/{grader}')
+    os.system(f'touch {grader_db} || true')
 
 
 def chown(user: str, /, *dirs: Dirs, group: t.Optional[str] = None) -> None:
@@ -179,3 +174,14 @@ def create_user(username: str) -> None:
         chmod(700, f'/home/{username}')
 
         chown(username, f'/home/{username}')
+
+
+def get_unix_usernames() -> t.List[str]:
+    '''Loads list of users from /etc/passwd file.
+
+    Returns:
+        t.List[str]: List of usernames
+
+    '''
+
+    return os.popen('cut -d: -f1 /etc/passwd').read().split()

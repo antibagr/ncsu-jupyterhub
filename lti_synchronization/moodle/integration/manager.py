@@ -71,7 +71,7 @@ class SyncManager:
         self.tokens = {}
         self.services = []
 
-        self._unix_users = set()
+        self._unix_users = set(system.get_unix_usernames())
 
     def update_services(self, course_id: str, port: int = 0) -> None:
         '''Add new Jupyterhub service to data.
@@ -146,9 +146,9 @@ class SyncManager:
 
         self.temp.write_grader_config(course_id)
 
-        system.chown(course_grader, grader_home, grader_home / 'grader.db', group=course_grader)
+        system.chown(course_grader, grader_home, group=course_grader)
 
-        system.chmod(755, grader_home, grader_home / 'grader.db')
+        system.chmod(755, grader_home)
 
         system.enable_nbgrader(course_grader)
 
