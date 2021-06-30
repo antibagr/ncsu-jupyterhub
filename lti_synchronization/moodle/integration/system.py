@@ -120,7 +120,7 @@ def chown(user: str, /, *dirs: Dirs, group: t.Optional[str] = None) -> None:
     if group is not None and group == '':
         raise ValueError('Group should not be empty string.')
 
-    who_to = user if not group else ':'.join((user, group))
+    who_to = user if not group else f'{user}:{group}'
 
     os.system(f'chown -R {who_to} {join_dirs(dirs)}')
 
