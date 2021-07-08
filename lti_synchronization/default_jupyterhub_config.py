@@ -1,7 +1,10 @@
 import os
+from typing import List
 from unittest.mock import MagicMock
 
 from jupyterhub.spawner import LocalProcessSpawner
+
+from lti_synchronization.moodle.integration import system
 
 # mocking c variable in dev environment
 if os.getenv('DEBUG', 'True') == 'True':
@@ -85,15 +88,45 @@ c.Spawner.args = ['--debug', ]
 
 c.LocalProcessSpawner.shell_cmd = ['bash', '-l', '-c']
 
+LOCAL_UNIX_USERS: List[str] = []
+
 
 def pre_spawn_hook(spawner) -> None:
+    '''Short summary.
 
-    spawner.log.warning(f'Spawning {spawner.user.name}')
+    Args:
+        spawner: .
+
+    '''
+
+    global LOCAL_UNIX_USERS
+
+    raise Exception(type(spawner))
+
+    username: str = spawner.user.name
+
+    spawner.log.warning(f'Spawning server for {username!r}')
+
+    if username not in LOCAL_UNIX_USERS:
+
+        spawner.log.info(f'Creating UNIX user for {username!r}')
+
+        system.create_user(username)
+        system.chown(username, f'/home/{username}')
+
+    LOCAL_UNIX_USERS = system.get_unix_usernames()
 
 
 def bind_auth_state(spawner, auth_state: dict) -> None:
+    '''Short summary.
 
-    spawner.log.info('Bind auth state to a spawner.')
+    Args:
+        spawner: .
+        auth_state: .
+
+    '''
+
+    spawner.log.info(f'{type(spawner)} {type(auth_state)}')
 
     spawner.userdata = auth_state
 
