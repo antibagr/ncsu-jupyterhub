@@ -91,8 +91,9 @@ c.LocalProcessSpawner.shell_cmd = ['bash', '-l', '-c']
 LOCAL_UNIX_USERS: List[str] = []
 
 
-def pre_spawn_hook(spawner) -> None:
-    '''Short summary.
+def pre_spawn_hook(spawner: LocalProcessSpawner) -> None:
+    '''Creates UNIX user if one is not presented on the system.
+    Updates global variable LOCAL_UNIX_USERS after the call.
 
     Args:
         spawner: .
@@ -101,13 +102,11 @@ def pre_spawn_hook(spawner) -> None:
 
     global LOCAL_UNIX_USERS
 
-    raise Exception(type(spawner))
-
     username: str = spawner.user.name
 
     spawner.log.warning(f'Spawning server for {username!r}')
 
-    if username not in LOCAL_UNIX_USERS:
+    if username not in LOCAL_UNIX_USERS and 'grader' not in username:
 
         spawner.log.info(f'Creating UNIX user for {username!r}')
 
@@ -117,7 +116,7 @@ def pre_spawn_hook(spawner) -> None:
     LOCAL_UNIX_USERS = system.get_unix_usernames()
 
 
-def bind_auth_state(spawner, auth_state: dict) -> None:
+def bind_auth_state(spawner: LocalProcessSpawner, auth_state: dict) -> None:
     '''Short summary.
 
     Args:
