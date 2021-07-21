@@ -195,10 +195,6 @@ class MoodleClient(BaseAPIClient):
 
         for course in self._get_courses():
 
-            print(course.course_id)
-
-            print(course_ids)
-
             if course.course_id not in course_ids:
                 continue
 

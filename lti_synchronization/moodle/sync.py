@@ -65,8 +65,8 @@ def synchronize(
                 'Please consider reading about using filters.'
                 )
 
-        for key in keys:
-            if not isinstance(json_in_file[key], list):
+        for json_key in keys:
+            if not isinstance(json_in_file[json_key], list):
                 raise TypeError(
                     f'Your input JSON must contain keys: {keys}.'
                     '\nEach of them supposed to be an array of courses\' ids.'
@@ -76,7 +76,7 @@ def synchronize(
                     })}'''
                 )
 
-            for val in json_in_file[key]:
+            for val in json_in_file[json_key]:
                 if not isinstance(val, (str, int)):
                     raise TypeError(f'Invalid course\'s id in JSON: {val}')
 
