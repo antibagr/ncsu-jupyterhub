@@ -111,7 +111,6 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
                 'course_id': cls.format_string(course['shortname']),
                 'title': course['displayname'],
                 'category': course['categoryid'],
-                'need_nbgrader': course['categoryid'] == int(os.environ['MOODLE_NBGRADER_CATEGORY_ID']),
                 'instructors': [],
                 'students': [],
                 'graders': [],

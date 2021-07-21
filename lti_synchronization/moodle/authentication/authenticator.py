@@ -86,7 +86,8 @@ class LTI13Authenticator(OAuthenticator):
         # jwt_verify_and_decode() but logging the
         id_token: str = handler.get_argument('id_token')
 
-        self.log.debug(f'Got ID token issued by platform: {len(id_token) if id_token else None}')
+        self.log.debug(
+            f'Got ID token issued by platform: {len(id_token) if id_token else None}')
 
         # extract claims from jwt (id_token)
         # sent by the platform. as tool use the jwks (public key)

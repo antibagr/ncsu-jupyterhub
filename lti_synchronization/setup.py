@@ -1,11 +1,12 @@
 import setuptools
-import os
 from pathlib import Path
 
 
 base_dir = Path(__file__).resolve().parent
-# with open("../README.md", "r", encoding="utf-8") as fh:
-long_description = 'Description' # fh.read()
+
+long_description = '''
+LTI synchronization tool to patch Jupyterhub with Moodle LMS support
+'''
 
 setuptools.setup(
     name='ltisync',

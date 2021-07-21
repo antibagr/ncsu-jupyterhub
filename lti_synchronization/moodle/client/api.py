@@ -150,7 +150,7 @@ class MoodleClient(BaseAPIClient):
                              'get_categories method.')
 
     @log_load_data('courses')
-    def load_courses(self, **filters: Filters) -> None:
+    def load_courses(self, json_in: dict) -> None:
         '''Store courses from Moodle to self.courses
 
         There is two ways to select only courses that needs Jupyterhub
@@ -191,16 +191,18 @@ class MoodleClient(BaseAPIClient):
                 of valid items.
         '''
 
-        if self._use_categories:
-            logger.info('Using category id to filter courses.')
+        course_ids = set(json_in['jupyterhub']) | set(json_in['nbgrader'])
 
         for course in self._get_courses():
 
-            if self._use_categories and course.category not in self._cats:
+            print(course.course_id)
+
+            print(course_ids)
+
+            if course.course_id not in course_ids:
                 continue
 
-            if self.helper.skip_course(course, filters):
-                continue
+            course.need_nbgrader = course.course_id in json_in['nbgrader']
 
             self.courses.append(course)
 
@@ -237,12 +239,11 @@ class MoodleClient(BaseAPIClient):
                     course[group].append(user)
 
     def fetch_courses(
-            self,
-            *,
-            json_path: t.Optional[PathLike] = None,
-            save_on_disk: bool = True,
-            **filters: Filters,
-        ) -> None:
+                self,
+                *,
+                json_in: dict,
+                json_out: t.Optional[PathLike],
+            ) -> None:
         '''Download formatted course data from Moodle.
 
         Before you hit this method, make sure to read about filtering courses
@@ -267,19 +268,19 @@ class MoodleClient(BaseAPIClient):
 
         with suppress(KeyboardInterrupt):
 
-            self.load_courses(**filters)
+            self.load_courses(json_in)
 
             self.load_users()
 
             logger.info('Processing data is completed.')
 
-            if not save_on_disk:
+            if not json_out:
 
                 return
 
             try:
 
-                save_moodle_courses(self.courses, json_path)
+                save_moodle_courses(self.courses, json_out)
 
                 logger.info('Successfully update json with data from Moodle.')
 
