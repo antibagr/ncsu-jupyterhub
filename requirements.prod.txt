@@ -14,13 +14,16 @@ oauthlib==3.1.1
 pem==21.2.0
 pycryptodome==3.10.1
 PyJWT==1.7.1
-python-dotenv==0.17.1
 yapf==0.31.0
 
 # Test packages
 
 pytest==6.2.4
 pytest-asyncio==0.15.1
+pytest-clarity==1.0.1
 pytest-xdist==2.2.1
+pytest-reportlog==0.1.2
+
+python-dotenv==0.17.1
 
 requests==2.25.1
