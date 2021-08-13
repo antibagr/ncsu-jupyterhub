@@ -169,7 +169,7 @@ def create_user(username: str) -> None:
 
     logger.info(f'Create linux user {username}.')
 
-    os.system(f'adduser -q --gecos "" --disabled-password {username}')
+    os.system(f'adduser -q --gecos "" --disabled-password --force-badname {username}')
 
     # if 'grader' not in username:
     #

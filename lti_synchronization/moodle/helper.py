@@ -30,6 +30,9 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
 
         string = re.sub(r'[^\w-]+', '_', string)
 
+        if string[0].isdigit():
+            string = f'a_{string}'
+
         return string.lstrip('_.-').lower()[:50]
 
     @classmethod
@@ -66,7 +69,7 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
 
         logger.debug(f'Normalized email {email!r} to {username!r}')
 
-        return username
+        return cls.format_string(username)
 
     @classmethod
     def get_user_group(cls, user: User) -> str:
@@ -133,7 +136,7 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
             'id': user['id'],
             'first_name': user['firstname'],
             'last_name': user['lastname'],
-            'username': cls.format_string(user['username']),
+            'username': cls.email_to_username(user['username']),
             'email': user['email'],
             'roles': [role['shortname'] for role in user['roles']],
         })

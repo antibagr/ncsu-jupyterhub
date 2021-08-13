@@ -9,7 +9,6 @@ from moodle.authentication.validator import LTI13LaunchValidator
 from moodle.authentication.helper import LTIHelper
 from moodle.typehints import JsonType
 from oauthenticator.oauth2 import OAuthenticator
-from jupyterhub.utils import url_path_join
 from tornado.web import HTTPError
 from traitlets import Unicode
 
@@ -58,10 +57,10 @@ class LTI13Authenticator(OAuthenticator):
     ).tag(config=True)
 
     async def authenticate(
-                self,
-                handler: LTI13LoginHandler,
-                *_whatever: t.Any,
-                **__whatever: t.Any,
+                    self,
+                    handler: LTI13LoginHandler,
+                    *args,
+                    **kwargs,
             ) -> JsonType:
         '''
         Overrides authenticate from base class
@@ -98,43 +97,18 @@ class LTI13Authenticator(OAuthenticator):
             verify=False,
             audience=self.client_id,
         )
-
         self.log.debug(f'Decoded JWT is {dump_json(jwt_decoded)}')
 
         if self.validator.validate_launch_request(jwt_decoded):
 
             jwt_course_id = jwt_decoded[f'{purl}/context']['label']
-
             course_id = self.helper.format_string(jwt_course_id)
 
             self.log.debug('Normalized course label is %s' % course_id)
-
             self.log.debug(json.dumps(jwt_decoded, indent=2))
 
-            username = jwt_decoded[purl + '/ext']['user_username']
-
-#             if 'email' in jwt_decoded and jwt_decoded['email']:
-#                 username = self.helper.email_to_username(
-#                     jwt_decoded['email'])
-#             if 'name' in jwt_decoded and jwt_decoded['name']:
-#                 username = jwt_decoded['name']
-#             elif 'given_name' in jwt_decoded and jwt_decoded['given_name']:
-#                 username = jwt_decoded['given_name']
-#             elif 'family_name' in jwt_decoded and jwt_decoded['family_name']:
-#                 username = jwt_decoded['family_name']
-#             elif (
-#                 f'{purl}/lis' in jwt_decoded
-#                 and 'person_sourcedid'
-#                 in jwt_decoded[f'{purl}/lis']
-#                 and jwt_decoded[f'{purl}/lis']['person_sourcedid']
-#             ):
-#                 username = jwt_decoded[f'{purl}/lis']['person_sourcedid'].lower()
-#
-#             elif (
-#                 'lms_user_id' in jwt_decoded[f'{purl}/custom']
-#                 and jwt_decoded[f'{purl}/custom']['lms_user_id']
-#             ):
-#                 username = str(jwt_decoded[f'{purl}/custom']['lms_user_id'])
+            raw_username = jwt_decoded[purl + '/ext']['user_username']
+            username = self.helper.email_to_username(raw_username)
 
             # ensure the username is normalized
             self.log.debug('username is %s' % username)
@@ -165,13 +139,11 @@ class LTI13Authenticator(OAuthenticator):
             ):
                 launch_return_url = jwt_decoded[f'{purl}/launch_presentation']['return_url']
 
-            lms_user_id = jwt_decoded['sub'] if 'sub' in jwt_decoded else username
-
-            # ensure the user name is normalized
-            # username_normalized = self.helper.format_string(username)
-            #
-            # self.log.debug('Assigned username is: %s' % username_normalized)
-
+            lms_user_id = (
+                jwt_decoded['sub']
+                if 'sub' in jwt_decoded
+                else username
+            )
             return {
                 'name': username,
                 'auth_state': {
