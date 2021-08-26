@@ -121,6 +121,16 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
         })
 
     @classmethod
+    def get_name(cls, user: JsonType) -> t.Tuple[str, str]:
+        if user.get('fullname'):
+            first_name, last_name = user['fullname'].split()
+        elif None not in (user.get('first_name'), user.get('last_name')):
+            first_name, last_name = user['first_name'], user['last_name']
+        else:
+            first_name, last_name = cls.email_to_username(user['email']), ''
+        return first_name, last_name
+
+    @classmethod
     def format_user(cls, user: JsonType) -> User:
         '''Format raw json response to convinient dictionary.
 
@@ -131,11 +141,12 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
             User: JsonDict with user information
 
         '''
+        first_name, last_name = cls.get_name(user)
 
         return JsonDict({
             'id': user['id'],
-            'first_name': user['firstname'],
-            'last_name': user['lastname'],
+            'first_name': first_name,
+            'last_name': last_name,
             'username': cls.email_to_username(user['username']),
             'email': user['email'],
             'roles': [role['shortname'] for role in user['roles']],
