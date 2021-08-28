@@ -122,9 +122,9 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
 
     @classmethod
     def get_name(cls, user: JsonType) -> t.Tuple[str, str]:
-        if user.get('fullname'):
+        if user.get('fullname', None):
             first_name, last_name = user['fullname'].split()
-        elif None not in (user.get('first_name'), user.get('last_name')):
+        elif None not in (user.get('first_name', None), user.get('last_name', None)):
             first_name, last_name = user['first_name'], user['last_name']
         else:
             first_name, last_name = cls.email_to_username(user['email']), ''
@@ -147,7 +147,7 @@ class MoodleBasicHelper(metaclass=DocInheritMeta(style='google_with_merge', incl
             'id': user['id'],
             'first_name': first_name,
             'last_name': last_name,
-            'username': cls.email_to_username(user['username']),
+            'username': cls.email_to_username(user.get('username', None) or user['email']),
             'email': user['email'],
             'roles': [role['shortname'] for role in user['roles']],
         })
