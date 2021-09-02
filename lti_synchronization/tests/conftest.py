@@ -6,6 +6,7 @@ import typing as t
 
 import pytest
 from dotenv import load_dotenv
+from loguru import logger
 
 from moodle.client.api import MoodleClient
 from moodle.client.helper import MoodleDataHelper
@@ -24,6 +25,11 @@ def pytest_sessionstart():
     load_dotenv()
 
 
+@pytest.fixture(autouse=True, scope='session')
+def disable_logging():
+    logger.remove()
+
+
 ''' UTILS '''
 
 
@@ -35,7 +41,11 @@ def valid_email(email: str) -> bool:
 
 
 def random_string(length: int = 10) -> str:
-    return ''.join(random.choice(string.ascii_lowercase) for _ in range(length))
+    return ''.join(
+        random.choice(string.ascii_lowercase)
+        for _ in
+        range(length)
+    )
 
 
 def make_roles(*role_names: str) -> t.List[Role]:
@@ -52,13 +62,15 @@ def event_loop():
 
 @pytest.fixture
 def get_client() -> t.Callable[[], MoodleClient]:
-
-    def _get_client(*, url: t.Optional[str] = None, key: t.Optional[str] = None) -> MoodleClient:
+    def _get_client(
+            *,
+            url: t.Optional[str] = None,
+            key: t.Optional[str] = None
+    ) -> MoodleClient:
         return MoodleClient(
             url=url or 'test.moodle.com',
             key=key or 'some_private_api_key',
         )
-
     return _get_client
 
 
@@ -80,15 +92,15 @@ def user_fabric() -> t.Callable[[t.Any, ...], User]:
     '''
     User fabric decorator.
     '''
-
-    def _user_fabric(*,
-                     id: t.Optional[int] = None,
-                     username: t.Optional[str] = None,
-                     email: t.Optional[str] = None,
-                     first_name: t.Optional[str] = None,
-                     last_name: t.Optional[str] = None,
-                     roles: t.Optional[t.List[Role]] = None,
-                     ) -> User:
+    def _user_fabric(
+        *,
+        id: t.Optional[int] = None,
+        username: t.Optional[str] = None,
+        email: t.Optional[str] = None,
+        first_name: t.Optional[str] = None,
+        last_name: t.Optional[str] = None,
+        roles: t.Optional[t.List[Role]] = None,
+    ) -> User:
         '''
         Create new user. Keyword-only arguments allowed.
         '''
@@ -107,7 +119,8 @@ def user_fabric() -> t.Callable[[t.Any, ...], User]:
             for role in roles:
                 if role not in ROLES:
                     raise ValueError(
-                        'Role [%s] does not set in moodle.settings.ROLES tuple.' % role)
+                        'Role [%s] does not set in moodle.settings.ROLES tuple.' % role
+                    )
 
         return JsonDict({
             'id': id or random.randint(0, 100),
@@ -115,26 +128,33 @@ def user_fabric() -> t.Callable[[t.Any, ...], User]:
             'email': email or f'{random_string(10)}@mail.com',
             'first_name': first_name or random_string(10),
             'last_name': last_name or random_string(10),
-            'roles': roles or [random.choice(ROLES) for _ in range(random.randint(0, 5))],
+            'roles': roles or [
+                random.choice(ROLES)
+                for _ in
+                range(random.randint(0, 5))
+            ],
         })
     return _user_fabric
 
 
 @pytest.fixture
-def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Any, ...], Course]:
+def course_fabric(
+        user_fabric: t.Callable
+) -> t.Callable[[t.Any, ...], Course]:
     '''
     Course fabric decorator.
     '''
 
-    def _course_fabric(*,
-                       id: t.Optional[int] = None,
-                       title: t.Optional[str] = None,
-                       course_id: t.Optional[str] = None,
-                       category: t.Optional[int] = None,
-                       instructors: t.Optional[t.List[User]] = None,
-                       students: t.Optional[t.List[User]] = None,
-                       graders: t.Optional[t.List[User]] = None,
-                       ) -> Course:
+    def _course_fabric(
+        *,
+        id: t.Optional[int] = None,
+        title: t.Optional[str] = None,
+        course_id: t.Optional[str] = None,
+        category: t.Optional[int] = None,
+        instructors: t.Optional[t.List[User]] = None,
+        students: t.Optional[t.List[User]] = None,
+        graders: t.Optional[t.List[User]] = None,
+    ) -> Course:
         '''
         Create new course. Keyword-only arguments allowed.
         '''
@@ -153,17 +173,35 @@ def course_fabric(user_fabric: t.Callable) -> t.Callable[[t.Any, ...], Course]:
         graders = graders or []
 
         for user in instructors + students + graders:
-            assert tuple(user.keys()) == ('id', 'username',
-                                          'email', 'first_name', 'last_name', 'roles')
+            assert tuple(user.keys()) == (
+                'id',
+                'username',
+                'email',
+                'first_name',
+                'last_name',
+                'roles',
+            )
 
         return JsonDict({
             'id': id or random.randint(1, 100),
             'title': title or random_string(20),
             'course_id': course_id or random_string(20),
             'category': category or random.randint(0, 100),
-            'instructors': [] or [user_fabric() for _ in range(random.randint(0, 5))],
-            'students': [] or [user_fabric() for _ in range(random.randint(0, 5))],
-            'graders': [] or [user_fabric() for _ in range(random.randint(0, 5))],
+            'instructors': [] or [
+                user_fabric()
+                for _ in
+                range(random.randint(0, 5))
+            ],
+            'students': [] or [
+                user_fabric()
+                for _ in
+                range(random.randint(0, 5))
+            ],
+            'graders': [] or [
+                user_fabric()
+                for _ in
+                range(random.randint(0, 5))
+            ],
         })
     return _course_fabric
 
@@ -197,7 +235,11 @@ def teacher(user_fabric: t.Callable) -> User:
 
 
 @pytest.fixture
-def course(course_fabric: t.Callable, student: User, teacher: User) -> Course:
+def course(
+        course_fabric: t.Callable,
+        student: User,
+        teacher: User,
+) -> Course:
     return course_fabric(
         students=[student],
         graders=[teacher]

@@ -1,6 +1,5 @@
 import json
 import os
-import typing as t
 
 from loguru import logger
 from moodle.authentication.handlers import (LTI13CallbackHandler,
